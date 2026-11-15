@@ -143,6 +143,7 @@ class SettingsViewModelTest {
         val (viewModel, _) = viewModel()
         val file = File(tmp.root, "backup.json")
         viewModel.messages.test(timeout = IO_TIMEOUT) {
+            viewModel.prepareBackup(null)
             viewModel.backup(Uri.fromFile(file), "1.0.0")
             assertThat(awaitItem()).isEqualTo(SettingsMessage.BackedUp)
             assertThat(file.readText()).contains("\"format\":\"budget-widget-backup\"")
@@ -164,6 +165,33 @@ class SettingsViewModelTest {
             assertThat(awaitItem()).isEqualTo(SettingsMessage.ImportStarted(30))
         }
         assertThat(backfills).containsExactly(now - 30L * 24 * 60 * 60 * 1000)
+    }
+
+    @Test
+    fun `a password-protected backup asks for its password on restore, again after a wrong one`() = runTest {
+        val (viewModel, _) = viewModel()
+        val file = File(tmp.root, "protected.json")
+        viewModel.messages.test(timeout = IO_TIMEOUT) {
+            viewModel.prepareBackup("long enough")
+            viewModel.backup(Uri.fromFile(file), "1.0.3")
+            assertThat(awaitItem()).isEqualTo(SettingsMessage.BackedUp)
+            assertThat(file.readText()).contains("budget-widget-backup-encrypted")
+
+            // A picker result without a prepared backup (the app was killed meanwhile) writes nothing.
+            val orphan = File(tmp.root, "orphan.json")
+            viewModel.backup(Uri.fromFile(orphan), "1.0.3")
+            assertThat(awaitItem()).isEqualTo(SettingsMessage.BackupNotSaved)
+            assertThat(orphan.exists()).isFalse()
+
+            viewModel.restore(Uri.fromFile(file))
+            viewModel.state.first { it.restorePrompt == RestorePrompt(wrong = false) && !it.busy }
+            viewModel.restoreWithPassphrase("not it")
+            viewModel.state.first { it.restorePrompt == RestorePrompt(wrong = true) && !it.busy }
+            viewModel.restoreWithPassphrase("long enough")
+            assertThat(awaitItem()).isEqualTo(SettingsMessage.Restored(0))
+            // The prompt closes once the backup opened.
+            viewModel.state.first { it.restorePrompt == null }
+        }
     }
 
     private companion object {

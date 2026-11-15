@@ -99,7 +99,7 @@ fun SettingsRoute(
     }
     val appVersion = remember(context) { appVersion(context) }
     val backup = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(MIME_JSON)) { uri ->
-        uri?.let { viewModel.backup(it, appVersion) }
+        if (uri == null) viewModel.cancelBackup() else viewModel.backup(uri, appVersion)
     }
     val export = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(MIME_CSV)) { uri ->
         uri?.let(viewModel::exportCsv)
@@ -150,8 +150,13 @@ fun SettingsRoute(
             openParserFeedback = onOpenParserFeedback,
             openAbout = onOpenAbout,
             exportCsv = { export.launch(fileName("transactions", "csv")) },
-            backup = { backup.launch(fileName("backup", "json")) },
+            backup = { passphrase ->
+                viewModel.prepareBackup(passphrase)
+                backup.launch(fileName("backup", "json"))
+            },
             restore = { restore.launch(arrayOf(MIME_JSON, "text/plain", "application/octet-stream")) },
+            restoreWithPassphrase = viewModel::restoreWithPassphrase,
+            cancelRestore = viewModel::cancelRestore,
             startFresh = viewModel::startFresh,
             allowNotifications = {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -183,8 +188,11 @@ internal class SettingsActions(
     val openParserFeedback: () -> Unit = {},
     val openAbout: () -> Unit = {},
     val exportCsv: () -> Unit = {},
-    val backup: () -> Unit = {},
+    /** A null passphrase means a plain backup (ADR-0044). */
+    val backup: (passphrase: String?) -> Unit = {},
     val restore: () -> Unit = {},
+    val restoreWithPassphrase: (String) -> Unit = {},
+    val cancelRestore: () -> Unit = {},
     val startFresh: () -> Unit = {},
 )
 
@@ -279,7 +287,7 @@ internal fun SettingsScreen(
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             SmsSection(state.unparsedCount, actions)
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            DataSection(state.busy, actions)
+            DataSection(state.busy, state.restorePrompt, actions)
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             LinkRow(
                 title = stringResource(R.string.settings_about),
@@ -507,7 +515,7 @@ private fun SmsSection(unparsedCount: Int, actions: SettingsActions) {
 }
 
 @Composable
-private fun DataSection(busy: Boolean, actions: SettingsActions) {
+private fun DataSection(busy: Boolean, restorePrompt: RestorePrompt?, actions: SettingsActions) {
     Column {
         SectionHeader(stringResource(R.string.settings_section_data))
         var confirmRestore by rememberSaveable { mutableStateOf(false) }
@@ -551,24 +559,34 @@ private fun DataSection(busy: Boolean, actions: SettingsActions) {
                 onDismiss = { confirmRestore = false },
             )
         }
-        confirmExport?.let { kind ->
-            ConfirmDialog(
-                title = stringResource(
-                    if (kind ==
-                        ExportKind.CSV
-                    ) {
-                        R.string.settings_export_confirm_title_csv
-                    } else {
-                        R.string.settings_export_confirm_title_backup
-                    },
-                ),
+        when (confirmExport) {
+            ExportKind.CSV -> ConfirmDialog(
+                title = stringResource(R.string.settings_export_confirm_title_csv),
                 body = stringResource(R.string.settings_export_confirm_body),
                 confirm = stringResource(R.string.settings_export_confirm),
                 onConfirm = {
                     confirmExport = null
-                    if (kind == ExportKind.CSV) actions.exportCsv() else actions.backup()
+                    actions.exportCsv()
                 },
                 onDismiss = { confirmExport = null },
+            )
+
+            ExportKind.BACKUP -> BackupDialog(
+                onConfirm = { passphrase ->
+                    confirmExport = null
+                    actions.backup(passphrase)
+                },
+                onDismiss = { confirmExport = null },
+            )
+
+            null -> Unit
+        }
+        restorePrompt?.let { prompt ->
+            RestorePasswordDialog(
+                wrong = prompt.wrong,
+                busy = busy,
+                onConfirm = actions.restoreWithPassphrase,
+                onDismiss = actions.cancelRestore,
             )
         }
         if (confirmFresh) {
@@ -690,6 +708,8 @@ private fun messageText(resources: Resources, message: SettingsMessage): String 
     SettingsMessage.BackupTooNew -> resources.getString(R.string.settings_msg_too_new)
 
     SettingsMessage.FileFailed -> resources.getString(R.string.settings_msg_file_failed)
+
+    SettingsMessage.BackupNotSaved -> resources.getString(R.string.settings_msg_backup_not_saved)
 
     is SettingsMessage.StartedFresh ->
         resources.getQuantityString(R.plurals.settings_msg_started_fresh, message.removed, message.removed)

@@ -153,7 +153,8 @@ you.
 ### Back up, move phones, reinstall
 
 - **Settings → Back up** saves everything (transactions, categories, merchant rules, settings) to a
-  file you choose. The file isn't encrypted, so keep it somewhere safe. **Settings → Restore**
+  file you choose. Tick *Protect with a password* to encrypt it (AES-256); otherwise anyone who
+  can open the file can read it, so keep it somewhere safe. **Settings → Restore**
   loads it on any phone, replacing what's there. **Settings → Export to CSV** gives a spreadsheet.
 - Uninstalling deletes all app data, and Android's cloud backup is turned off for this app. Back up
   first.

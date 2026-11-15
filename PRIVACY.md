@@ -39,7 +39,10 @@ no internet access and never sends anything.
 ## Backups and export
 
 CSV export and JSON backup write a file to a location **you** choose (via Android's file picker).
-These files are not encrypted (encryption is planned for v1.1), so store them somewhere safe.
+A backup can be protected with a password: the file is then encrypted with AES-256-GCM, using a key
+derived from the password (PBKDF2-HMAC-SHA256, 600,000 rounds). The password is never stored; a
+forgotten one can't be recovered. CSV files and backups saved without a password are not
+encrypted, so store them somewhere safe.
 
 ## Deleting your data
 

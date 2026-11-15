@@ -556,7 +556,7 @@ dex references `Ljava/net/Socket`, `Ljava/net/HttpURLConnection`, `Ljava/net/URL
 `Landroid/webkit/` or `Ldalvik/system/*ClassLoader` (today: zero hits). Run in `ci.yml` and
 `release.yml`.
 
-### [ ] E5. Password-protected backup [F2]
+### [x] E5. Password-protected backup [F2] (1.0.3, ADR-0044)
 
 **1.0.2:** only a warning dialog before CSV export and backup (plaintext, choose a private folder).
 Encryption itself moved to **1.0.3**.
