@@ -103,7 +103,7 @@ screenshot or semantics tests updated.
 formats that parse). Look at: inbox card, sorted row, edit sheet, Quick-Sort sheet, Analysis in
 light and dark theme, both widgets, the notification. One screenshot each.
 
-### [ ] A2. One sheet scaffold (scaffold done; phone jitter confirmation pending): fixes the jitter, the easy dismiss, and five other sheets
+### [x] A2. One sheet scaffold (owner confirmed on the phone with 1.0.2-rc1: jitter gone): fixes the jitter, the easy dismiss, and five other sheets
 
 **Root causes** (TEST_REPORT items 2, 3, 3b). Every sheet is a
 `Column(Modifier.verticalScroll())` placed directly in a `ModalBottomSheet(skipPartiallyExpanded = true)`.
