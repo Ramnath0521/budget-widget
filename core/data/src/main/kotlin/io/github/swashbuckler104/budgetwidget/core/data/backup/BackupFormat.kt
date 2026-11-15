@@ -101,6 +101,8 @@ internal data class BackupTransaction(
     val isBackfill: Boolean = false,
     val note: String? = null,
     val duplicateOfId: Long? = null,
+    /** Added in app 1.0.2; older files have none and older apps ignore it (ignoreUnknownKeys). */
+    val linkedToId: Long? = null,
     val editedByUser: Boolean = false,
     val createdAt: Long,
     val updatedAt: Long,
@@ -153,13 +155,13 @@ internal fun BackupAccount.toEntity() =
 internal fun TransactionEntity.toBackup() = BackupTransaction(
     id, txnHash, source, amountPaise, direction, parserType, merchantRaw, merchantDisplay, merchantKey, accountId,
     occurredAt, smsSender, smsBody, reference, balanceAfterPaise, isCard, status, ignoreReason, categoryId,
-    autoCategorized, isBackfill, note, duplicateOfId, editedByUser, createdAt, updatedAt, sortedAt,
+    autoCategorized, isBackfill, note, duplicateOfId, linkedToId, editedByUser, createdAt, updatedAt, sortedAt,
 )
 
 internal fun BackupTransaction.toEntity() = TransactionEntity(
     id, txnHash, source, amountPaise, direction, parserType, merchantRaw, merchantDisplay, merchantKey, accountId,
     occurredAt, smsSender, smsBody, reference, balanceAfterPaise, isCard, status, ignoreReason, categoryId,
-    autoCategorized, isBackfill, note, duplicateOfId, editedByUser, createdAt, updatedAt, sortedAt,
+    autoCategorized, isBackfill, note, duplicateOfId, linkedToId, editedByUser, createdAt, updatedAt, sortedAt,
 )
 
 internal fun MerchantRuleEntity.toBackup() = BackupRule(merchantKey, categoryId, confirmCount, lastUsedAt)

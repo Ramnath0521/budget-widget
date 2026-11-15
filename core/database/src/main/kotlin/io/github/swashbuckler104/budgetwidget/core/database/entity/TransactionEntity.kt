@@ -72,6 +72,8 @@ data class TransactionEntity(
     val isBackfill: Boolean,
     val note: String? = null,
     val duplicateOfId: Long? = null,
+    /** The other leg of a transfer between the user's own accounts (ADR-0042); set on both legs. */
+    val linkedToId: Long? = null,
     val editedByUser: Boolean = false,
     val createdAt: Long,
     val updatedAt: Long,

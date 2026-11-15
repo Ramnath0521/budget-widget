@@ -24,7 +24,9 @@ internal object FinancialSmsHeuristic {
         MOVEMENT.containsMatchIn(body) &&
         ACCOUNT.containsMatchIn(body) &&
         !SECRET.containsMatchIn(body) &&
-        !NOT_A_TRANSACTION.containsMatchIn(body)
+        !NOT_A_TRANSACTION.containsMatchIn(body) &&
+        // The lender's or card's side of a payment the bank debit already shows (ADR-0042).
+        !FlowRules.isPaymentConfirmation(body)
 
     /** TRAI headers: `XX-NAME`, optionally with an `-S`/`-T`/`-G`/`-P` suffix; or a bare 6-letter name. */
     private val BUSINESS_HEADER = Regex("""^([A-Z]{2}-[A-Z0-9]{3,9}(-[A-Z])?|[A-Z]{6})$""", RegexOption.IGNORE_CASE)

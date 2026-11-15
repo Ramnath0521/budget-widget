@@ -82,3 +82,56 @@ name: Pre-approved loan offer is not a transaction
 sender: AD-HDFCBK
 body: Pre-approved Personal Loan of Rs.5,00,000 at 10.5% for you! EMI from Rs.10,747. Apply now on HDFC Bank NetBanking. T&C
 type: IGNORED
+---
+# Transfers and confirmations (v1.0.2, ADR-0042). From docs/handoff/probe-sms.tsv.
+name: Loan EMI by ACH mandate is a transfer to the lender
+sender: AD-HDFCBK
+body: UPDATE: INR 12,500.00 debited from HDFC Bank XX8812 on 05-NOV-26. Info: ACH D- BAJAJ FINANCE LTD-P400PHL1234567. Avl bal:INR 48,750.00
+type: TRANSFER
+amount: 12500.00
+direction: OUT
+merchant: BAJAJ FINANCE LTD
+last4: 8812
+flow: LOAN_REPAYMENT
+---
+name: Mutual fund SIP by ACH names the fund house
+sender: AD-HDFCBK
+body: UPDATE: INR 5,000.00 debited from HDFC Bank XX8812 on 07-NOV-26. Info: ACH D- INDIAN CLEARING CORP-MF12345. Avl bal:INR 43,750.00
+type: INVESTMENT
+amount: 5000.00
+direction: OUT
+merchant: INDIAN CLEARING CORP
+flow: -
+---
+name: Loan account credited is the lender side of the EMI, not income
+sender: AD-HDFCBK
+body: Rs.12,500.00 credited to your HDFC Bank Loan A/c XX4567 on 05-Nov-26 towards EMI repayment. Outstanding principal Rs.2,35,000.00
+type: TRANSFER
+amount: 12500.00
+direction: IN
+last4: 4567
+flow: LOAN_REPAYMENT
+---
+name: Loan disbursal is a transfer, not income
+sender: AD-HDFCBK
+body: Update! INR 2,00,000.00 deposited in HDFC Bank A/c XX8812 on 01-NOV-26 for LOAN DISBURSEMENT-PL4567.Avl bal INR 2,61,250.00. Cheque deposits in A/C are subject to clearing
+type: TRANSFER
+amount: 200000.00
+direction: IN
+flow: LOAN_DISBURSAL
+---
+name: Credit card bill paid by UPI is a transfer
+sender: AD-HDFCBK
+body: Rs.5000.00 debited from A/c XX8812 on 06-Nov-26 to sbicard.2290@sbi (UPI Ref No 630612345678)
+type: TRANSFER
+amount: 5000.00
+direction: OUT
+flow: CARD_BILL_PAYMENT
+---
+name: Plain UPI payment stays an expense
+sender: AD-HDFCBK
+body: Rs.10000.00 debited from A/c XX8812 on 07-Nov-26 to asha.self@kotak (UPI Ref No 630712345678)
+type: EXPENSE
+amount: 10000.00
+direction: OUT
+flow: -

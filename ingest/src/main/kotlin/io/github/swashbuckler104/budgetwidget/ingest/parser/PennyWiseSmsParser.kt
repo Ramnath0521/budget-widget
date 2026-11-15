@@ -32,7 +32,10 @@ internal class PennyWiseSmsParser @Inject constructor() : SmsParser {
             // Upstream regex code on unexpected input; keep the SMS for a bug report instead.
             return unparsed(sms, UnparsedReason.PARSER_ERROR)
         } ?: return unparsed(sms, UnparsedReason.NO_MATCH)
-        return ParsedTransactionMapper.map(parsed, sms)
+        return when (val mapped = ParsedTransactionMapper.map(parsed, sms)) {
+            is SmsParseResult.Transaction -> FlowRules.apply(mapped.parsed)
+            else -> mapped
+        }
     }
 
     override fun redactUnparsed(body: String): String = UnparsedRedactor.redact(body)

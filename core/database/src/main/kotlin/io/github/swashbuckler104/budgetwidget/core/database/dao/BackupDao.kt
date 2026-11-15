@@ -55,6 +55,9 @@ interface BackupDao {
     @Query("UPDATE transactions SET duplicateOfId = :duplicateOfId WHERE id = :id")
     suspend fun setDuplicateOf(id: Long, duplicateOfId: Long)
 
+    @Query("UPDATE transactions SET linkedToId = :linkedToId WHERE id = :id")
+    suspend fun setLinkedTo(id: Long, linkedToId: Long)
+
     @Query("DELETE FROM transactions")
     suspend fun deleteTransactions()
 

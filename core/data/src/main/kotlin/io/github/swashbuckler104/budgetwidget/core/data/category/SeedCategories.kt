@@ -1,6 +1,7 @@
 package io.github.swashbuckler104.budgetwidget.core.data.category
 
 import io.github.swashbuckler104.budgetwidget.core.model.CategoryKind
+import io.github.swashbuckler104.budgetwidget.core.model.sms.FlowHint
 
 /** One seed category (SCOPE.md "Seed categories"). [key] is stable across renames. */
 internal data class SeedCategory(
@@ -26,7 +27,7 @@ internal data class SeedGroup(
  * they render on Android 8 (minSdk) in widgets and notifications, which can't use EmojiCompat.
  */
 internal object SeedCategories {
-    const val VERSION = 2
+    const val VERSION = 3
 
     private fun c(key: String, name: String, emoji: String, vararg children: SeedCategory) =
         SeedCategory(key, name, emoji, children.toList())
@@ -164,6 +165,22 @@ internal object SeedCategories {
             0xFFD4FF4A.toInt(),
             CategoryKind.TRANSFER,
         ),
+        // Money moved between your own pots: never spending or income (ADR-0042). Transactions the
+        // parser recognises as one of these are sorted here automatically.
+        SeedGroup(
+            c(
+                "transfers",
+                "Transfers",
+                "🔁",
+                c(TransferSeeds.OWN_TRANSFER, "Between my accounts", "↔️"),
+                c(TransferSeeds.LOAN_EMI, "Loan EMI", "🏦"),
+                c(TransferSeeds.CARD_BILL, "Credit card bill", "💳"),
+                c(TransferSeeds.LOAN_RECEIVED, "Loan received", "📥"),
+            ),
+            0xFF8C92AC.toInt(),
+            CategoryKind.TRANSFER,
+            since = 3,
+        ),
         SeedGroup(
             c(
                 "income",
@@ -178,4 +195,21 @@ internal object SeedCategories {
             CategoryKind.INCOME,
         ),
     )
+}
+
+/** Seed keys of the Transfers group, and which [FlowHint] lands in which (ADR-0042). */
+internal object TransferSeeds {
+    const val OWN_TRANSFER = "own_transfer"
+    const val LOAN_EMI = "loan_emi"
+    const val CARD_BILL = "card_bill"
+    const val LOAN_RECEIVED = "loan_received"
+
+    fun keyFor(hint: FlowHint): String = when (hint) {
+        FlowHint.OWN_TRANSFER -> OWN_TRANSFER
+        FlowHint.LOAN_REPAYMENT -> LOAN_EMI
+        FlowHint.CARD_BILL_PAYMENT -> CARD_BILL
+        FlowHint.LOAN_DISBURSAL -> LOAN_RECEIVED
+    }
+
+    fun flowFor(seedKey: String): FlowHint? = FlowHint.entries.firstOrNull { keyFor(it) == seedKey }
 }

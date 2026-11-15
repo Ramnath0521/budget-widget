@@ -49,7 +49,7 @@ class CategoryTest {
         val groups = repo.observeGroups().first()
         assertThat(groups.map { it.category.name }).containsExactly(
             "Food & Drinks", "Shopping", "Housing", "Transportation", "Vehicle", "Life & Entertainment",
-            "Communication, PC", "Financial Expenses", "Family", "Investments", "Income",
+            "Communication, PC", "Financial Expenses", "Family", "Investments", "Transfers", "Income",
         ).inOrder()
         val food = groups.first().children.map { it.name }
         assertThat(food).containsExactly("Groceries", "Restaurant, Fast-food", "Drinks, Alcohol").inOrder()
@@ -57,7 +57,7 @@ class CategoryTest {
         assertThat(income).containsExactly("Salary", "Freelancing", "Other", "Self Transfer").inOrder()
         val financial = groups.single { it.category.name == "Financial Expenses" }.children.map { it.name }
         assertThat(financial.last()).isEqualTo("Self Transfer")
-        assertThat(groups.sumOf { it.children.size }).isEqualTo(47)
+        assertThat(groups.sumOf { it.children.size }).isEqualTo(51)
         assertThat(
             groups.flatMap { g ->
                 g.children.map { it.name.length }

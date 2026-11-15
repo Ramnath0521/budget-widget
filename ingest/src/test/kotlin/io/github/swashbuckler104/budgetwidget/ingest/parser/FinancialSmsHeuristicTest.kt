@@ -51,9 +51,11 @@ class FinancialSmsHeuristicTest {
         assertThat(body("Pre-approved loan of Rs.5,00,000 credited to your account instantly! Apply now")).isFalse()
         // Real alerts, including a reversal that mentions a failed payment.
         assertThat(body("Rs 320.00 reversed and credited to your A/c XX3071 for failed UPI txn Ref No 6301")).isTrue()
+        // The card's or lender's side of a payment: the bank debit holds the money (ADR-0042).
         assertThat(
             body("received payment of Rs.5,000.00 via UPI & credited to your SBI Credit Card ending 2290"),
-        ).isTrue()
+        ).isFalse()
+        assertThat(body("we have received your EMI payment of Rs. 12,500 towards your Loan A/c XX4567")).isFalse()
         // Bank SMS from a sender that fails the header check (spaces) are still judged by the body.
         assertThat(body("Rs.649.00 spent on your SBI Credit Card ending with 2290 on 05Nov26.")).isTrue()
     }

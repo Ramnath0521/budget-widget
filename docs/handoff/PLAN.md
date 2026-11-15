@@ -172,7 +172,7 @@ go in our own layer, and each one is also drafted for upstream in `docs/upstream
 `feat/transfer-loan-direction` branch only touches their app, not parser-core, so nothing to
 reuse.
 
-### [ ] B1. Golden corpus: extend the existing one
+### [x] B1. Golden corpus: extend the existing one (done in 1.0.2 inline in golden/*.txt; chains are TransferChainTest)
 
 **Change to the user's decision:** do not add `ingest/src/test/resources/sms-samples/`. The repo
 already has `ingest/src/test/resources/golden/` (7 files, format in its README, `GoldenSmsTest`
@@ -192,7 +192,7 @@ runs in CI and fails when a parsed sample breaks). A second corpus would split t
 **Acceptance.** `./gradlew :ingest:testDebugUnitTest --tests '*Golden*'` runs the new cases. New
 cases that fail today are checked in with the fix in B2/B3, not marked ignored.
 
-### [ ] B2. Rule layer around parser-core
+### [x] B2. Rule layer around parser-core
 
 **Goal.** Fix wrong types and merchants and stop storing junk, without editing the submodule.
 
@@ -247,7 +247,7 @@ upstream tests still pass untouched. `scripts/check-module-boundaries.sh` passes
 or L8, L2 shows merchant "BAJAJ FINANCE LTD" with "Loan EMI" suggested first, unparsed list has
 no OTP, promo or reminder.
 
-### [ ] B3. Transaction linking
+### [x] B3. Transaction linking
 
 **Goal.** One movement of money is counted once. A self transfer, an EMI, a card bill payment or
 a reversal never adds to both Spent and Income.

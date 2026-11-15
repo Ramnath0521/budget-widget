@@ -17,6 +17,9 @@ interface CategoryDao {
     @Query("SELECT * FROM category ORDER BY parentId IS NOT NULL, sortOrder, id")
     suspend fun getAll(): List<CategoryEntity>
 
+    @Query("SELECT * FROM category WHERE seedKey = :seedKey")
+    suspend fun bySeedKey(seedKey: String): CategoryEntity?
+
     @Query("SELECT * FROM category WHERE id = :id")
     suspend fun get(id: Long): CategoryEntity?
 

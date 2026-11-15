@@ -59,6 +59,7 @@ class GoldenSmsTest(@Suppress("unused") private val name: String, private val ca
                 case.fields["last4"]?.let { check("last4").that(parsed.accountLast4).isEqualTo(it.orNull()) }
                 case.fields["card"]?.let { check("card").that(parsed.isCard).isEqualTo(it.toBooleanStrict()) }
                 case.fields["balance"]?.let { check("balance").that(parsed.balanceAfterPaise).isEqualTo(paise(it)) }
+                case.fields["flow"]?.let { check("flow").that(parsed.flow?.name ?: "-").isEqualTo(it) }
                 check("body kept verbatim").that(parsed.body).isEqualTo(sms.body)
                 check("occurredAt").that(parsed.occurredAt).isEqualTo(RECEIVED_AT)
             }

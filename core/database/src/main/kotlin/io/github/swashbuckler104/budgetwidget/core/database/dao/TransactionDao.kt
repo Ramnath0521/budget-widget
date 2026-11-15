@@ -102,6 +102,54 @@ interface TransactionDao {
         bankName: String,
     ): TransactionEntity?
 
+    /**
+     * The other leg of a transfer between two of the user's accounts (ADR-0042): same bank
+     * reference and amount, the opposite direction, a different account, close in time, not yet
+     * linked or ignored. More than one match means it is ambiguous; the caller then links nothing.
+     */
+    @Query(
+        """
+        SELECT * FROM transactions
+        WHERE id != :excludeId AND reference = :reference AND amountPaise = :amountPaise
+          AND direction != :direction AND accountId IS NOT NULL AND accountId != :accountId
+          AND occurredAt >= :fromMillis AND occurredAt <= :toMillis
+          AND linkedToId IS NULL AND status != 'IGNORED'
+        LIMIT 2
+        """,
+    )
+    suspend fun findOtherTransferLeg(
+        excludeId: Long,
+        reference: String,
+        amountPaise: Long,
+        direction: Direction,
+        accountId: Long,
+        fromMillis: Long,
+        toMillis: Long,
+    ): List<TransactionEntity>
+
+    /** Same amount, opposite direction, another account, close in time, not linked or ignored (ADR-0042). */
+    @Query(
+        """
+        SELECT * FROM transactions
+        WHERE id != :excludeId AND amountPaise = :amountPaise AND direction != :direction
+          AND accountId IS NOT NULL AND accountId != :accountId
+          AND occurredAt >= :fromMillis AND occurredAt <= :toMillis
+          AND linkedToId IS NULL AND status != 'IGNORED'
+        LIMIT 3
+        """,
+    )
+    suspend fun findOppositeLegs(
+        excludeId: Long,
+        amountPaise: Long,
+        direction: Direction,
+        accountId: Long,
+        fromMillis: Long,
+        toMillis: Long,
+    ): List<TransactionEntity>
+
+    @Query("UPDATE transactions SET linkedToId = :linkedToId WHERE id = :id")
+    suspend fun setLinkedTo(id: Long, linkedToId: Long?)
+
     @Query("UPDATE transactions SET duplicateOfId = :duplicateOfId WHERE id = :id")
     suspend fun setDuplicateOf(id: Long, duplicateOfId: Long)
 
