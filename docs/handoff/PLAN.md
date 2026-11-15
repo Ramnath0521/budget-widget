@@ -544,7 +544,7 @@ IDs in brackets are from SECURITY_AUDIT.md.
 default. New setting "Block screenshots" (default off) applies `FLAG_SECURE` to both. Check:
 recents shows a blank card; with the toggle on, `adb exec-out screencap` returns black.
 
-### [ ] E3. Log hygiene [F7]
+### [x] E3. Log hygiene [F7]
 
 `core/data/.../inbox/InboxEvents.kt:28`: log the listener class and the exception class name
 only. Add a lint or grep check in CI: no `Log.` call outside an allowlist of files.

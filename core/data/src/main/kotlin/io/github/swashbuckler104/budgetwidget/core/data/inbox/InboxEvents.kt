@@ -24,8 +24,9 @@ class InboxEvents @Inject constructor(private val listeners: Set<@JvmSuppressWil
             } catch (e: CancellationException) {
                 throw e
             } catch (e: RuntimeException) {
-                // Never log transaction details (PRIVACY.md): the class name is enough to debug.
-                Log.w(TAG, "${listener::class.java.simpleName} failed", e)
+                // Never log transaction details (PRIVACY.md): class names only. Not the message or the
+                // stack trace's causes, which a future listener could fill with transaction data.
+                Log.w(TAG, "${listener::class.java.simpleName} failed: ${e::class.java.name}")
             }
         }
     }

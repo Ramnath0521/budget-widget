@@ -16,6 +16,7 @@ v1 scope is fixed.
 scripts/check-permissions.sh app/build/outputs/apk/release/app-release-unsigned.apk
 scripts/check-release-apk.sh app/build/outputs/apk/release/app-release-unsigned.apk   # not debuggable, no network code
 scripts/check-module-boundaries.sh
+scripts/check-no-logging.sh                             # no Log/println outside the reviewed allowlist
 ```
 
 ## Ground rules
