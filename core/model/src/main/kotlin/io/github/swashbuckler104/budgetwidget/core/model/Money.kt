@@ -1,8 +1,11 @@
 package io.github.swashbuckler104.budgetwidget.core.model
 
+/** The minus sign shown before amounts (U+2212): same width as `+` in tabular figures. */
+const val MINUS_SIGN = "\u2212"
+
 /**
  * Formats paise as rupees with Indian digit grouping, e.g. `12345678` -> `₹1,23,456.78`.
- * Whole-rupee amounts drop the decimals (`₹500`). Negative values get a leading `-`.
+ * Whole-rupee amounts drop the decimals (`₹500`). Negative values get a leading [MINUS_SIGN].
  */
 fun formatInr(paise: Long): String {
     // Long.MIN_VALUE has no positive counterpart, so work on the unsigned magnitude.
@@ -17,8 +20,18 @@ fun formatInr(paise: Long): String {
         head.reversed().chunked(2).joinToString(",").reversed() + "," + rupees.takeLast(3)
     }
     val decimals = if (fraction == 0) "" else ".%02d".format(fraction)
-    return (if (negative) "-" else "") + "₹" + grouped + decimals
+    return (if (negative) MINUS_SIGN else "") + "₹" + grouped + decimals
 }
+
+/**
+ * A transaction amount with its direction written out: `+₹1,200` (in), `−₹450` (out), `₹450`
+ * (no direction). Color is never the only signal, so every directional amount goes through here.
+ */
+fun formatSignedInr(paise: Long, direction: Direction?): String = when (direction) {
+    Direction.IN -> "+"
+    Direction.OUT -> MINUS_SIGN
+    null -> ""
+} + formatInr(paise)
 
 /**
  * Parses what someone typed as rupees into paise: `450`, `1,200.5`, `₹ 99.99`. Null for blank,

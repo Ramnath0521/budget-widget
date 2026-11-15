@@ -83,7 +83,7 @@ class QuickSortWidgetContentTest {
 
         onNode(hasText("3 to sort")).assertExists()
         onNode(hasText(" · closes at midnight")).assertExists()
-        onNode(hasText("-₹450")).assertExists()
+        onNode(hasText("\u2212₹450")).assertExists()
         onNode(hasText("Swiggy")).assertExists()
         chips.forEach { onNode(hasContentDescription("Sort as ${it.name}")).assertExists() }
         onNode(hasText("Restaurant")).assertExists()
@@ -116,8 +116,8 @@ class QuickSortWidgetContentTest {
         provideComposable { QuickSortWidgetContent(snapshot(), intents) }
 
         onNode(hasText("Up next")).assertExists()
-        onNode(hasText("-₹120 · Uber")).assertExists()
-        onNode(hasText("-₹99 · Unknown merchant")).assertExists()
+        onNode(hasText("\u2212₹120 · Uber")).assertExists()
+        onNode(hasText("\u2212₹99 · Unknown merchant")).assertExists()
     }
 
     @Test

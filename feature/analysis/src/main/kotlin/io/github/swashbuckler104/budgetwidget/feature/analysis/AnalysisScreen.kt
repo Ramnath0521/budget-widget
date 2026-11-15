@@ -514,10 +514,11 @@ private fun Summary(analysis: PeriodAnalysis, current: Boolean) {
                     Text(
                         text,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        // Spending more is shown neutral, not red; spending less is a win (green).
+                        color = if (more) MaterialTheme.colorScheme.onSurfaceVariant else money.onIncomeContainer,
                         modifier = Modifier
                             .clip(MaterialTheme.shapes.small)
-                            .background((if (more) money.spendContainer else money.incomeContainer))
+                            .background(if (more) MaterialTheme.colorScheme.surfaceVariant else money.incomeContainer)
                             .padding(horizontal = 8.dp, vertical = 2.dp),
                     )
                 }
@@ -542,7 +543,7 @@ private fun Summary(analysis: PeriodAnalysis, current: Boolean) {
                 compact = true,
                 label = stringResource(R.string.analysis_net),
                 value = (if (net > 0) "+" else "") + formatInrRounded(net),
-                valueColor = if (net >= 0) money.income else money.spend,
+                valueColor = if (net > 0) money.income else MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
             )
             StatCard(

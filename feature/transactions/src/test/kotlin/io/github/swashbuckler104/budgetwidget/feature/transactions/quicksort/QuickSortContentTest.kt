@@ -51,7 +51,7 @@ class QuickSortContentTest {
                 onClose = {},
             )
         }
-        compose.onNodeWithText("-₹450").assertExists()
+        compose.onNodeWithText("\u2212₹450").assertExists()
         compose.onNodeWithText("BLINKIT").assertExists()
         compose.onNodeWithText("3 to sort").assertExists()
         compose.onNodeWithText("Groceries").performClick()

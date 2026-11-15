@@ -143,7 +143,6 @@ internal fun EditTransactionContent(
                     t.amountPaise,
                     direction,
                     style = MaterialTheme.typography.headlineMedium,
-                    emphasizeSpend = true,
                 )
                 Text(
                     listOfNotNull(

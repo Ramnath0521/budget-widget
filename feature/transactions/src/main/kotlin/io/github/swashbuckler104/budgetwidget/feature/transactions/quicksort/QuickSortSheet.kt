@@ -43,10 +43,12 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.swashbuckler104.budgetwidget.core.designsystem.component.CategoryChip
 import io.github.swashbuckler104.budgetwidget.core.designsystem.component.CategoryPicker
+import io.github.swashbuckler104.budgetwidget.core.designsystem.theme.BudgetTheme
 import io.github.swashbuckler104.budgetwidget.core.model.Category
 import io.github.swashbuckler104.budgetwidget.core.model.Direction
 import io.github.swashbuckler104.budgetwidget.core.model.Transaction
 import io.github.swashbuckler104.budgetwidget.core.model.formatInr
+import io.github.swashbuckler104.budgetwidget.core.model.formatSignedInr
 import io.github.swashbuckler104.budgetwidget.feature.transactions.R
 import java.time.Instant
 import java.time.ZoneId
@@ -177,9 +179,9 @@ private fun TransactionSummary(transaction: Transaction, overdue: Boolean, modif
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                (if (incoming) "+" else "-") + formatInr(transaction.amountPaise),
+                formatSignedInr(transaction.amountPaise, transaction.direction),
                 style = MaterialTheme.typography.headlineMedium,
-                color = if (incoming) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                color = if (incoming) BudgetTheme.money.income else MaterialTheme.colorScheme.onSurface,
             )
             if (overdue) {
                 Badge(containerColor = MaterialTheme.colorScheme.errorContainer) {

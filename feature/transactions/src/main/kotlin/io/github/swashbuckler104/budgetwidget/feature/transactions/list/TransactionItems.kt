@@ -242,7 +242,6 @@ internal fun InboxCard(
                     t.amountPaise,
                     t.direction,
                     style = MaterialTheme.typography.titleMedium,
-                    emphasizeSpend = true,
                 )
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {

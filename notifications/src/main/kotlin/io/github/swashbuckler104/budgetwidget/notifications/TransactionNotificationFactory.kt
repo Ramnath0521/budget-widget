@@ -10,6 +10,7 @@ import io.github.swashbuckler104.budgetwidget.core.data.inbox.QuickSortLauncher
 import io.github.swashbuckler104.budgetwidget.core.model.Direction
 import io.github.swashbuckler104.budgetwidget.core.model.Transaction
 import io.github.swashbuckler104.budgetwidget.core.model.formatInr
+import io.github.swashbuckler104.budgetwidget.core.model.formatSignedInr
 import java.util.Date
 import javax.inject.Inject
 
@@ -38,7 +39,7 @@ internal class TransactionNotificationFactory @Inject constructor(
             .setSmallIcon(R.drawable.ic_stat_transaction)
             .setContentTitle(title(transaction))
             .setContentText(text)
-            .setColor(if (transaction.direction == Direction.IN) COLOR_IN else COLOR_OUT)
+            .setColor(if (transaction.direction == Direction.IN) COLOR_IN else COLOR_NEUTRAL)
             .setWhen(transaction.occurredAt)
             // The text already says when; the header would repeat it as "now".
             .setShowWhen(false)
@@ -87,10 +88,10 @@ internal class TransactionNotificationFactory @Inject constructor(
             .build()
     }
 
-    private fun title(transaction: Transaction): String {
-        val sign = if (transaction.direction == Direction.IN) "+" else "-"
-        return listOfNotNull(sign + formatInr(transaction.amountPaise), transaction.merchantDisplay).joinToString(" · ")
-    }
+    private fun title(transaction: Transaction): String = listOfNotNull(
+        formatSignedInr(transaction.amountPaise, transaction.direction),
+        transaction.merchantDisplay,
+    ).joinToString(" · ")
 
     private fun account(transaction: Transaction): String? =
         listOfNotNull(transaction.bankName, transaction.accountLast4?.let { "••$it" })
@@ -118,8 +119,8 @@ internal class TransactionNotificationFactory @Inject constructor(
     companion object {
         const val GROUP = "transactions"
 
-        /** Material red 800 / green 800: readable on light and dark notification shades. */
-        private const val COLOR_OUT = 0xFFC62828.toInt()
+        /** Green 800 for money in; blue grey 600 for money out (neutral, not alarming). */
+        private const val COLOR_NEUTRAL = 0xFF546E7A.toInt()
         private const val COLOR_IN = 0xFF2E7D32.toInt()
         private const val SORT_KEY_DIGITS = 19
     }

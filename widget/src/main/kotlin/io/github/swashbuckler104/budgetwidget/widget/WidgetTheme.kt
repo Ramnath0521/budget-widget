@@ -55,10 +55,9 @@ internal const val CONTROL_FONT_SCALE = 1f
 internal fun widgetFontScale(): Float =
     LocalContext.current.resources.configuration.fontScale.coerceIn(1f, MAX_FONT_SCALE)
 
-/** Income green and spending red, fixed hues tuned per theme (see [MoneyColors]). */
+/** Income green, a fixed hue tuned per theme (see [MoneyColors]). Money out uses the normal text color. */
 internal object WidgetMoney {
     val income: ColorProvider = ColorProvider(day = MoneyColors.light.income, night = MoneyColors.dark.income)
-    val spend: ColorProvider = ColorProvider(day = MoneyColors.light.spend, night = MoneyColors.dark.spend)
 }
 
 /**

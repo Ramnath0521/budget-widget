@@ -316,3 +316,8 @@ deliberate deviation. Newest at the bottom. Status is Accepted unless stated.
 - **How:** `MainActivity` and `QuickSortActivity` set `FLAG_SECURE` in `onCreate` before the first frame, then follow `SettingsStore.secureScreen` (Settings > Privacy > "Hide amounts in screenshots & recents", default on). `FLAG_SECURE` also blanks the recents card, so `setRecentsScreenshotEnabled` is not needed.
 - **Trade-off:** with it on, the user's own screenshots of the app are black too; that is why it is a switch. Widgets and notifications are drawn by the launcher and system UI and are not covered.
 - **Not in backups:** a per-phone privacy choice; a restored phone starts with it on.
+
+## ADR-0040: Money out is neutral, with a real minus sign
+- **Why:** red on every outgoing amount read as an alarm for normal spending. The owner asked for income green and money out in the normal text color, with the sign carrying the meaning.
+- **How:** `formatSignedInr` (`:core:model`) is the one place a directional sign is built: `+` for in, U+2212 `−` for out (same width as `+` in tabular figures); `formatInr` also uses `−` for negative values. `MoneyColors` no longer has spend colors. "More than last month" in Analysis and the Insight widget is neutral; "less" stays green. Notification accent for money out is blue grey.
+- **Red stays** for errors, Delete and the Overdue badge, which are not amounts.

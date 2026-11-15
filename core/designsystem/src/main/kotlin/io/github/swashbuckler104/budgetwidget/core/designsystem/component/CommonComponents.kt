@@ -29,11 +29,12 @@ import io.github.swashbuckler104.budgetwidget.core.designsystem.theme.BudgetThem
 import io.github.swashbuckler104.budgetwidget.core.designsystem.theme.tabular
 import io.github.swashbuckler104.budgetwidget.core.model.Direction
 import io.github.swashbuckler104.budgetwidget.core.model.formatInr
+import io.github.swashbuckler104.budgetwidget.core.model.formatSignedInr
 
 /**
- * A signed amount: `-₹450` / `+₹1,200`. The sign is always written out, because color is never
- * the only signal (SCOPE.md §6). Income is green; spending stays neutral unless [emphasizeSpend]
- * (totals and summaries), so long lists don't turn into a wall of red.
+ * A signed amount: `−₹450` / `+₹1,200`. The sign is always written out, because color is never
+ * the only signal (SCOPE.md §6). Income is green; money out uses the normal text color everywhere
+ * (owner's choice, v1.0.2), so lists never turn into a wall of red.
  */
 @Composable
 fun MoneyText(
@@ -41,21 +42,15 @@ fun MoneyText(
     direction: Direction?,
     modifier: Modifier = Modifier,
     style: TextStyle = MaterialTheme.typography.titleMedium,
-    emphasizeSpend: Boolean = false,
     muted: Boolean = false,
 ) {
-    val sign = when (direction) {
-        Direction.IN -> "+"
-        Direction.OUT -> "-"
-        null -> ""
-    }
+    // Income is green; money out uses the normal text color, its sign carries the meaning.
     val color = when {
         muted -> MaterialTheme.colorScheme.onSurfaceVariant
         direction == Direction.IN -> BudgetTheme.money.income
-        direction == Direction.OUT && emphasizeSpend -> BudgetTheme.money.spend
         else -> MaterialTheme.colorScheme.onSurface
     }
-    Text(sign + formatInr(paise), modifier = modifier, style = style.tabular(), color = color, maxLines = 1)
+    Text(formatSignedInr(paise, direction), modifier = modifier, style = style.tabular(), color = color, maxLines = 1)
 }
 
 /** A list section title, announced as a heading. [trailing] sits at the end (a total, an action). */

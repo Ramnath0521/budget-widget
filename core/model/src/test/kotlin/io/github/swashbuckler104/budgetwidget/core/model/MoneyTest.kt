@@ -21,12 +21,12 @@ class MoneyTest {
 
     @Test
     fun `negative amounts keep the sign in front`() {
-        assertThat(formatInr(-150_050)).isEqualTo("-₹1,500.50")
+        assertThat(formatInr(-150_050)).isEqualTo("\u2212₹1,500.50")
     }
 
     @Test
     fun `extreme values do not overflow`() {
-        assertThat(formatInr(Long.MIN_VALUE)).isEqualTo("-₹92,23,37,20,36,85,47,758.08")
+        assertThat(formatInr(Long.MIN_VALUE)).isEqualTo("\u2212₹92,23,37,20,36,85,47,758.08")
         assertThat(formatInr(Long.MAX_VALUE)).isEqualTo("₹92,23,37,20,36,85,47,758.07")
     }
 
@@ -51,5 +51,13 @@ class MoneyTest {
         assertThat(formatInrRounded(3_841_50)).isEqualTo("₹3,842")
         assertThat(formatInrRounded(3_841_49)).isEqualTo("₹3,841")
         assertThat(formatInrRounded(0)).isEqualTo("₹0")
+    }
+
+    @Test
+    fun `signed amounts write the direction out`() {
+        assertThat(formatSignedInr(45_000, Direction.OUT)).isEqualTo("\u2212₹450")
+        assertThat(formatSignedInr(120_050, Direction.IN)).isEqualTo("+₹1,200.50")
+        assertThat(formatSignedInr(45_000, null)).isEqualTo("₹450")
+        assertThat(formatSignedInr(0, Direction.OUT)).isEqualTo("\u2212₹0")
     }
 }
