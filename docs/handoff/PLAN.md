@@ -554,6 +554,10 @@ dex references `Ljava/net/Socket`, `Ljava/net/HttpURLConnection`, `Ljava/net/URL
 
 ### [ ] E5. Password-protected backup [F2]
 
+**1.0.2:** only a warning dialog before CSV export and backup (plaintext, choose a private folder).
+Encryption itself moved to **1.0.3**.
+
+
 Optional passphrase in the Back up dialog. PBKDF2-HMAC-SHA256 (600k iterations, 16-byte salt) ->
 AES-256-GCM, `javax.crypto` only. File = small JSON header (`format`, `kdf`, `iterations`, `salt`,
 `nonce`) + ciphertext. Restore detects the header and asks for the passphrase; wrong passphrase

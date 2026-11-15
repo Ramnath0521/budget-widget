@@ -84,6 +84,10 @@
     <string name="settings_backup_summary">Save everything to a file. It isn\'t encrypted: keep it somewhere safe.</string>
     <string name="settings_restore">Restore</string>
     <string name="settings_restore_summary">Replace everything with a backup file</string>
+    <string name="settings_export_confirm_title_csv">Export to CSV?</string>
+    <string name="settings_export_confirm_title_backup">Save a backup?</string>
+    <string name="settings_export_confirm_body">The file is not encrypted. Anyone, or any app, that can open it can read every transaction, amount and merchant.\n\nNext, choose where to save it. Pick a folder only you use, not a shared or cloud-synced one, and delete the file once you no longer need it.</string>
+    <string name="settings_export_confirm">Choose where to save</string>
     <string name="settings_restore_confirm_title">Restore a backup?</string>
     <string name="settings_restore_confirm_body">Your transactions, categories, merchant rules and settings are replaced by the ones in the file. This can\'t be undone.</string>
     <string name="settings_restore_choose">Choose file</string>

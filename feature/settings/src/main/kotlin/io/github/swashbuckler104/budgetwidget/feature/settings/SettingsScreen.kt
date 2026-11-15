@@ -504,16 +504,18 @@ private fun DataSection(busy: Boolean, actions: SettingsActions) {
         SectionHeader(stringResource(R.string.settings_section_data))
         var confirmRestore by rememberSaveable { mutableStateOf(false) }
         var confirmFresh by rememberSaveable { mutableStateOf(false) }
+        // Export files are plaintext (audit F2): say so, and where, before the file picker opens.
+        var confirmExport by rememberSaveable { mutableStateOf<ExportKind?>(null) }
         LinkRow(
             title = stringResource(R.string.settings_export_csv),
             summary = stringResource(R.string.settings_export_csv_summary),
-            onClick = actions.exportCsv,
+            onClick = { confirmExport = ExportKind.CSV },
             enabled = !busy,
         )
         LinkRow(
             title = stringResource(R.string.settings_backup),
             summary = stringResource(R.string.settings_backup_summary),
-            onClick = actions.backup,
+            onClick = { confirmExport = ExportKind.BACKUP },
             enabled = !busy,
         )
         LinkRow(
@@ -541,6 +543,26 @@ private fun DataSection(busy: Boolean, actions: SettingsActions) {
                 onDismiss = { confirmRestore = false },
             )
         }
+        confirmExport?.let { kind ->
+            ConfirmDialog(
+                title = stringResource(
+                    if (kind ==
+                        ExportKind.CSV
+                    ) {
+                        R.string.settings_export_confirm_title_csv
+                    } else {
+                        R.string.settings_export_confirm_title_backup
+                    },
+                ),
+                body = stringResource(R.string.settings_export_confirm_body),
+                confirm = stringResource(R.string.settings_export_confirm),
+                onConfirm = {
+                    confirmExport = null
+                    if (kind == ExportKind.CSV) actions.exportCsv() else actions.backup()
+                },
+                onDismiss = { confirmExport = null },
+            )
+        }
         if (confirmFresh) {
             ConfirmDialog(
                 title = stringResource(R.string.settings_start_fresh_confirm_title),
@@ -556,6 +578,8 @@ private fun DataSection(busy: Boolean, actions: SettingsActions) {
         }
     }
 }
+
+private enum class ExportKind { CSV, BACKUP }
 
 /** A row that opens something: a screen, a dialog or a file picker. */
 @Composable
