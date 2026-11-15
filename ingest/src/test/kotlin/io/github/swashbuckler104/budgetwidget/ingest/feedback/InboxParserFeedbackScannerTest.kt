@@ -92,12 +92,11 @@ class InboxParserFeedbackScannerTest {
     @Test
     fun `the report lists every message with its sender, reason and month`() = runTest {
         val found = InboxParserFeedbackScanner(FakeInbox(true, inbox), PennyWiseSmsParser()).scan(90, now)!!
-        val text = ParserFeedbackReport.text(found, "1.0.2")
-        assertThat(text).startsWith(ParserFeedbackReport.FORMAT)
-        assertThat(text).contains("app: 1.0.2, parser-core: 0623c2b, messages: 2")
-        assertThat(text).contains("| ATMSBI | NO_MATCH | ")
-        assertThat(text).contains("| x2")
-        assertThat(text).doesNotContain("482913")
+        val lines = ParserFeedbackReport.jsonLines(found, "1.0.3").lines().filter { it.isNotEmpty() }
+        assertThat(lines).hasSize(2)
+        assertThat(lines[0]).startsWith("""{"v":2,"app":"1.0.3","parser":"0623c2b","sender":"ATMSBI",""")
+        assertThat(lines[0]).contains(""""reason":"NO_MATCH","count":2,""")
+        assertThat(lines.joinToString()).doesNotContain("482913")
     }
 
     private companion object {

@@ -19,8 +19,19 @@ changes no budget data (ADR-0043). It keeps only messages that read like bank tr
 were not parsed, masks them (ADR-0046: digits become 9 except the last 2 of account and card
 numbers, words outside the built-in vocabulary become x of the same length, links and UPI IDs
 become `<URL>` and `<UPI>`), and shows exactly what will be sent. *Keep real amounts* leaves
-transaction amounts readable. Remove anything you don't want to share, then *Email* (your own mail
-app sends it) or *Save file*.
+transaction amounts readable. Remove single messages, or every message from one sender with
+*Remove all*, then *Email* (your own mail app sends it) or *Save file*.
+
+The report is JSON Lines (ADR-0047), one self-contained object per message:
+
+```
+{"v":2,"app":"1.0.3","parser":"0623c2b","sender":"ATMSBI","reason":"NO_MATCH","count":2,"month":"2026-11","body":"..."}
+```
+
+The saved `.jsonl` file is exactly that. The email body has one line of explanation above the same
+lines. Reports from several phones can be concatenated into one file. Prefer the saved file: a mail
+app that hard-wraps long lines can drop a space where it wrapped (the script joins wrapped lines
+back, but can't know about a lost space).
 
 Masked text keeps its shape, so templates still read: `Rs.9,999.99 debited from A/c XX9912 to
 XXXXXX on 99-Nov-99`. Expected values in golden stubs come from the masked text (amount 9999.99,
@@ -28,15 +39,16 @@ last4 `9912`, merchant `XXXXXX`); that is fine, the template is what the parser 
 
 Single messages can also be copied from *Settings → Unparsed bank SMS*. Those are masked less
 (numbers only, so you can recognise them), so mask names and amounts by hand, then paste them into
-a file in the same format (see `ParserFeedbackReport` in `core/data/.../feedback/ParserFeedback.kt`).
+a `.jsonl` file in the same format (see `ParserFeedbackReport` in
+`core/data/.../feedback/ParserFeedback.kt`).
 
 Never commit an unmasked message. Never paste real SMS into a public issue.
 
 ## 2. Turn the report into test stubs
 
 ```sh
-python3 -I scripts/feedback-to-golden.py report.txt --dry-run   # see where each message goes
-python3 -I scripts/feedback-to-golden.py report.txt             # append stubs
+python3 -I scripts/feedback-to-golden.py report.jsonl --dry-run   # see where each message goes
+python3 -I scripts/feedback-to-golden.py report.jsonl             # append stubs
 ```
 
 Each message becomes a case with `type: TODO` in `ingest/src/test/resources/golden/<bank>.txt`

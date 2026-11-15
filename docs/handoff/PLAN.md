@@ -317,7 +317,7 @@ banks outside the 7.
 look financial but did not parse, remove any, and send them by email or save a file. Nothing is
 written to budget data, nothing is sent automatically.
 
-### [ ] C1. Scanner (no writes, by construction)
+### [x] C1. Scanner (no writes, by construction) (1.0.2, ADR-0043)
 
 - `ParserFeedbackScanner` in `:ingest`; constructor takes only `SmsInboxSource`, `SmsParser`
   (the layered one) and `SmsRedactor`. It has **no** DAO, repository, notifier or WorkManager
@@ -353,7 +353,7 @@ Tests: each rule; a property test that no output contains a 6+ digit run other t
 or a token outside the vocabulary; the whole golden corpus round-trips to something that still
 has the same amount/keyword positions.
 
-### [ ] C3. Preview and share UI
+### [x] C3. Preview and share UI (1.0.2 and 1.0.3, ADR-0043, ADR-0047: text in the email body, no FileProvider)
 
 - Settings -> "Help improve the parser". Intro screen: what is scanned, what is removed, that
   nothing is sent until they press Send, link to the privacy text. Button "Scan last 90 days".
@@ -374,7 +374,7 @@ has the same amount/keyword positions.
 - Update SECURITY_AUDIT section 3 (first provider of ours) and add the provider to a CI check:
   exactly one provider of ours, not exported, only that cache path.
 
-### [ ] C4. Docs
+### [x] C4. Docs (PRIVACY.md and the in-app intro; Play listing text comes with D2)
 
 `PRIVACY.md`: new section (opt-in, one-time, runs only when started, what is removed, user
 reviews and sends with their own mail app, the app still has no internet permission). Mirror the

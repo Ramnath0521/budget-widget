@@ -63,6 +63,13 @@
     </plurals>
     <string name="feedback_preview_hint">This is exactly what will be shared. Remove anything you don\'t want to send.</string>
     <string name="feedback_remove">Remove message from %1$s</string>
+    <string name="feedback_by_sender">By sender</string>
+    <plurals name="feedback_sender_count">
+        <item quantity="one">%1$s: %2$d message</item>
+        <item quantity="other">%1$s: %2$d messages</item>
+    </plurals>
+    <string name="feedback_remove_all">Remove all</string>
+    <string name="feedback_remove_all_from">Remove all messages from %1$s</string>
     <string name="feedback_email">Email</string>
     <string name="feedback_save">Save file</string>
     <string name="feedback_saved">File saved</string>
