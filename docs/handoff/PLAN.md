@@ -297,6 +297,8 @@ inbox count; compare with the `expect-*` values.
 
 ### B5. "Teach this message" (assessed, deferred)
 
+**Not in 1.0.2; revisit for 1.0.3 or later.**
+
 Effort: large (token-tagging UI, a template compiler, storage, backup, tests for a user-written
 grammar). Value now: low to medium. Templates made from one sample are brittle, a wrong tag
 causes silent wrong amounts, and B4 fixes the same message for every user. **Do instead (small,
@@ -308,6 +310,8 @@ banks outside the 7.
 ---
 
 ## C. "Help improve the parser" (opt-in 90-day scan)
+
+**Moved to 1.0.3** (owner's scope rule: ship only if done cleanly). 1.0.2 already masks and filters the unparsed list (E1), which C builds on.
 
 **Goal.** From Settings, the user can scan the last 90 days of SMS, see redacted messages that
 look financial but did not parse, remove any, and send them by email or save a file. Nothing is
