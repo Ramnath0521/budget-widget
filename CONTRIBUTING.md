@@ -19,6 +19,24 @@ scripts/check-module-boundaries.sh
 scripts/check-no-logging.sh                             # no Log/println outside the reviewed allowlist
 ```
 
+## Dependency verification
+
+Gradle checks the SHA-256 of every dependency and plugin it downloads against
+`gradle/verification-metadata.xml`, so a tampered artifact on a mirror fails the build. After
+adding or updating a dependency, a plugin or the Android Gradle Plugin, refresh it with the same
+task set CI and the release run, then review the diff (new entries should only be the artifacts
+you meant to add, from the expected group):
+
+```sh
+./gradlew --write-verification-metadata sha256 \
+  spotlessCheck lint test assembleDebug assembleRelease :app:bundleRelease :baselineprofile:assemble
+git diff gradle/verification-metadata.xml
+```
+
+Never edit hashes by hand, and never add a `trust` rule to silence a failure. AAPT2 is a
+per-OS artifact, so a first build on macOS or Windows may need the same refresh; commit the extra
+entries. IDE source and javadoc downloads are trusted by name only (they never reach the APK).
+
 ## Ground rules
 
 - **No network.** No `INTERNET` permission, and no analytics, crash reporting, ads, Firebase or network libraries. CI fails on any permission not listed in `config/permissions-allowlist.txt`.
