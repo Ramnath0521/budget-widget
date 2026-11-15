@@ -34,6 +34,8 @@ class GoldenSmsTest(@Suppress("unused") private val name: String, private val ca
         when (type) {
             "UNPARSED" -> check("result").that(result).isInstanceOf(SmsParseResult.Unparsed::class.java)
 
+            "IGNORED" -> check("result").that(result).isEqualTo(SmsParseResult.Ignored)
+
             "BALANCE" -> {
                 check("result").that(result).isInstanceOf(SmsParseResult.BalanceUpdate::class.java)
                 result as SmsParseResult.BalanceUpdate
@@ -75,7 +77,10 @@ class GoldenSmsTest(@Suppress("unused") private val name: String, private val ca
         fun cases(): List<Array<Any>> {
             val all = GoldenCorpus.BANK_FILES.flatMap { bank ->
                 val cases = GoldenCorpus.load(bank)
-                val transactions = cases.count { it.fields["type"] !in setOf("UNPARSED", "NOT_BANK", "BALANCE") }
+                val transactions = cases.count {
+                    it.fields["type"] !in
+                        setOf("UNPARSED", "IGNORED", "NOT_BANK", "BALANCE")
+                }
                 check(transactions >= 2) { "golden/$bank.txt needs at least 2 transaction cases, has $transactions" }
                 cases
             }

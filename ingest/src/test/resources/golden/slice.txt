@@ -50,9 +50,9 @@ type: UNPARSED
 name: OTP is not a transaction
 sender: AD-SLCEIT-S
 body: Your OTP for slice transaction is 482910. Do not share.
-type: UNPARSED
+type: IGNORED
 ---
 name: Declined transaction is not stored
 sender: AD-SLCEIT-S
 body: Your slice credit card transaction of RS. 2499.50 on amazon.in was declined.
-type: UNPARSED
+type: IGNORED

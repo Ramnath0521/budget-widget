@@ -517,7 +517,7 @@ no-network proof are strong. The biggest blocker is not the SMS review but the *
 
 IDs in brackets are from SECURITY_AUDIT.md.
 
-### [ ] E1. Never store OTP or non-financial bodies [F9]
+### [x] E1. Never store OTP or non-financial bodies [F9]
 
 - Files: `core/data/.../ingest/IngestPipeline.kt:96-131`, `ingest/.../parser/FinancialSmsHeuristic.kt`,
   `SmsParser` interface.

@@ -6,6 +6,7 @@ import io.github.swashbuckler104.budgetwidget.core.data.WallClock
 import io.github.swashbuckler104.budgetwidget.core.data.inbox.InboxEvents
 import io.github.swashbuckler104.budgetwidget.core.data.sort.AutoSortSetting
 import io.github.swashbuckler104.budgetwidget.core.database.BudgetDatabase
+import io.github.swashbuckler104.budgetwidget.core.database.dao.UnparsedSmsDao
 import io.github.swashbuckler104.budgetwidget.core.database.entity.AccountEntity
 import io.github.swashbuckler104.budgetwidget.core.database.entity.TransactionEntity
 import io.github.swashbuckler104.budgetwidget.core.database.entity.UnparsedSmsEntity
@@ -79,6 +80,37 @@ class IngestPipeline @Inject constructor(
     fun generation(): Long = generation
 
     /**
+     * Applies the current storage rules to the unparsed list: entries that are not transaction
+     * alerts (OTPs, offers, reminders kept by v1.0.1 and older) are deleted, the rest are masked.
+     * Idempotent and cheap (at most [UnparsedSmsDao.MAX_ROWS] rows), so it runs on every reconcile.
+     */
+    suspend fun scrubUnparsed() = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            db.withTransaction {
+                val dao = db.unparsedSmsDao()
+                dao.getAll().forEach { row ->
+                    val body = row.body ?: return@forEach
+                    val sms = RawSms(row.sender, body, row.receivedAt)
+                    val keep = when (row.reason) {
+                        UnparsedReason.NO_MATCH, UnparsedReason.PARSER_ERROR ->
+                            !parser.isKnownBankSender(row.sender) || parser.parse(sms) !is SmsParseResult.Ignored
+
+                        UnparsedReason.UNKNOWN_SENDER -> parser.looksLikeUnknownBankAlert(sms)
+
+                        else -> true
+                    }
+                    if (!keep) {
+                        dao.delete(row.id)
+                    } else {
+                        val redacted = parser.redactUnparsed(body)
+                        if (redacted != body) dao.updateBody(row.id, redacted)
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Runs [block] with ingestion paused, then marks every scan that started earlier as stale.
      * Restore and "start fresh" use it, so a scan already iterating the inbox can't write old
      * messages into the new data (ADR-0027).
@@ -99,6 +131,8 @@ class IngestPipeline @Inject constructor(
             parser.looksLikeUnknownBankAlert(sms) -> SmsParseResult.Unparsed(UnparsedReason.UNKNOWN_SENDER)
             else -> return@withContext IngestOutcome.NotFinancial
         }
+        // An OTP, offer or reminder from a bank: nothing is stored (hard constraint 4).
+        if (result is SmsParseResult.Ignored) return@withContext IngestOutcome.NotFinancial
         val autoSortEnabled = autoSort.enabled()
         val dismissedUpTo = if (result is SmsParseResult.Unparsed) dismissals.upTo() else null
         val outcome = mutex.withLock {
@@ -113,6 +147,8 @@ class IngestPipeline @Inject constructor(
                         IngestOutcome.BalanceUpdated
                     }
 
+                    SmsParseResult.Ignored -> IngestOutcome.NotFinancial
+
                     is SmsParseResult.Unparsed -> {
                         // Deleted from the list by the user: a rescan must not bring it back.
                         val dismissed = dismissedUpTo?.let { sms.receivedAt <= it } ?: false
@@ -121,8 +157,9 @@ class IngestPipeline @Inject constructor(
                                 UnparsedSmsEntity(
                                     sender = sms.sender,
                                     bodyHash = sha256(sms.body),
-                                    // Only bank senders and bank-like alerts reach this point (step 1).
-                                    body = sms.body,
+                                    // Only bank-like alerts reach this point (step 1), with
+                                    // account, UPI and reference numbers masked.
+                                    body = parser.redactUnparsed(sms.body),
                                     receivedAt = sms.receivedAt,
                                     reason = result.reason,
                                 ),

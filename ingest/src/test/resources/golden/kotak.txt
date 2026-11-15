@@ -67,3 +67,9 @@ name: Card offer from the promotional header is not a spend
 sender: JD-KOTAKB-P
 body: Apply & link your Kotak Credit Card to UPI & get 5 Reward Points per Rs.100 spent. T&C: https://kotak.example/upi
 type: NOT_BANK
+---
+# Storage rules (v1.0.2, hard constraint 4). From docs/handoff/probe-sms.tsv.
+name: UPI collect request is not a transaction
+sender: JD-KOTAKB-S
+body: ravi.m42@okaxis has requested Rs.600.00 from you on Kotak UPI. Approve or decline in the app by 09-11-26.
+type: IGNORED

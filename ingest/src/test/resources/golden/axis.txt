@@ -48,3 +48,14 @@ direction: OUT
 merchant: ATM
 last4: 4418
 balance: 19410.60
+---
+# Storage rules (v1.0.2, hard constraint 4). From docs/handoff/probe-sms.tsv.
+name: Bounced EMI is not a transaction
+sender: AX-AXISBK-S
+body: Your EMI of INR 6,300.00 for Loan A/c no. XX771904 has bounced due to insufficient funds on 05-11-26. Charges apply. - Axis Bank
+type: IGNORED
+---
+name: Declined card payment is not a transaction
+sender: AX-AXISBK-S
+body: Transaction of INR 950 on Axis Bank Card no. XX2207 at ZOMATO was declined due to insufficient limit on 08-11-26.
+type: IGNORED

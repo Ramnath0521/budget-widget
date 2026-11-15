@@ -33,4 +33,28 @@ class FinancialSmsHeuristicTest {
         assertThat(looks("AD-NEWBNK-S", "OTP482913 for Rs 500 debited from your card")).isFalse()
         assertThat(looks("AD-NEWBNK-S", "Do not share your MPIN. Rs 500 debited from A/c XX1")).isFalse()
     }
+
+    @Test
+    fun `reminders, offers, failures and requests are not transactions, a real alert is`() {
+        val body = FinancialSmsHeuristic::looksLikeTransactionBody
+        assertThat(
+            body("EMI of Rs.12,500.00 for your Loan A/c XX4567 is due on 05-Nov-26. Ignore if already paid."),
+        ).isFalse()
+        assertThat(body("Rs.12,500.00 will be debited from A/c XX8812 on 05-Nov-26 towards BAJAJ FINANCE")).isFalse()
+        assertThat(
+            body("Your EMI of INR 6,300.00 for Loan A/c no. XX771904 has bounced. Paid charges apply."),
+        ).isFalse()
+        assertThat(body("Transaction of INR 950 on Card no. XX2207 was declined. Not debited.")).isFalse()
+        assertThat(
+            body("ravi@okaxis has requested Rs.600.00 from you on UPI, to be debited from your account"),
+        ).isFalse()
+        assertThat(body("Pre-approved loan of Rs.5,00,000 credited to your account instantly! Apply now")).isFalse()
+        // Real alerts, including a reversal that mentions a failed payment.
+        assertThat(body("Rs 320.00 reversed and credited to your A/c XX3071 for failed UPI txn Ref No 6301")).isTrue()
+        assertThat(
+            body("received payment of Rs.5,000.00 via UPI & credited to your SBI Credit Card ending 2290"),
+        ).isTrue()
+        // Bank SMS from a sender that fails the header check (spaces) are still judged by the body.
+        assertThat(body("Rs.649.00 spent on your SBI Credit Card ending with 2290 on 05Nov26.")).isTrue()
+    }
 }

@@ -304,3 +304,9 @@ deliberate deviation. Newest at the bottom. Status is Accepted unless stated.
 - **Layers:** a radial-gradient background drawable, a foreground with a 75% progress arc, the wallet, a card and a clasp, all scaled to 92% so the ring stays inside the 66dp safe zone, and a separate monochrome drawable for themed icons (the clasp is cut out so it reads in one color).
 - **Store icon:** the 512x512 PNG is the same artwork, full bleed, in `app/src/main/ic_launcher-playstore.png` and `fastlane/metadata/android/en-US/images/icon.png`. SVG sources are in `docs/icon/`.
 - **No text:** no letters or currency symbols, so the icon works in every language and at 32px.
+
+## ADR-0038: The unparsed list keeps only transaction-like bank SMS, masked
+- **Why:** v1.0.1 kept every message a known bank sent that the parser did not match, so OTPs, loan offers and EMI reminders were stored in full (audit F9, against hard constraint 4).
+- **Rule:** a known bank's unmatched message is kept only if its body reads like a completed transaction (rupee amount, movement word, account word, no OTP/PIN wording, no "is due", "will be debited", "bounced", "declined", "requested", "pre-approved", "apply now"). Otherwise the parser returns `SmsParseResult.Ignored` and nothing is stored. "Failed" is not in the list because reversals say "credited ... for failed UPI txn".
+- **Masking:** kept bodies go through `UnparsedRedactor` (`:ingest`): links, UPI IDs/emails, all but the last 2 digits of account, card, reference and phone numbers. Amounts, dates and wording stay so the message is still useful for a parser fix. Names are not detected; the screen asks the user to remove them before sharing. `bodyHash` stays the hash of the original body so rescans still dedupe.
+- **Existing data:** `IngestPipeline.scrubUnparsed()` runs at the start of every reconcile, deletes rows that the rule no longer keeps and masks the rest. Idempotent, at most 200 rows. No schema change.

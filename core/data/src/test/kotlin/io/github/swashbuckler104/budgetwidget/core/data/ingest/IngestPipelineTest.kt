@@ -12,6 +12,7 @@ import io.github.swashbuckler104.budgetwidget.core.data.repository.TransactionRe
 import io.github.swashbuckler104.budgetwidget.core.database.BudgetDatabase
 import io.github.swashbuckler104.budgetwidget.core.database.entity.CategoryEntity
 import io.github.swashbuckler104.budgetwidget.core.database.entity.MerchantRuleEntity
+import io.github.swashbuckler104.budgetwidget.core.database.entity.UnparsedSmsEntity
 import io.github.swashbuckler104.budgetwidget.core.model.CategoryKind
 import io.github.swashbuckler104.budgetwidget.core.model.Direction
 import io.github.swashbuckler104.budgetwidget.core.model.ParserType
@@ -165,6 +166,43 @@ class IngestPipelineTest {
     }
 
     @Test
+    fun `OTPs, offers and reminders from a bank are not stored anywhere`() = runTest {
+        val outcome = pipeline.ingest(RawSms(BANK, "OTP is 482913 for Rs 2499", 1), IngestOrigin.REALTIME)
+        assertThat(outcome).isEqualTo(IngestOutcome.NotFinancial)
+        assertThat(db.unparsedSmsDao().count()).isEqualTo(0)
+        assertThat(db.transactionDao().count()).isEqualTo(0)
+        assertThat(listener.events).isEmpty()
+    }
+
+    @Test
+    fun `unparsed bodies are stored redacted`() = runTest {
+        pipeline.ingest(RawSms(BANK, "Rs 10 debited Ref 630199887766", 1), IngestOrigin.REALTIME)
+        assertThat(db.unparsedSmsDao().getAll().single().body).isEqualTo("Rs 10 debited Ref ####")
+    }
+
+    @Test
+    fun `scrub deletes entries stored by older versions that are no longer kept, and masks the rest`() = runTest {
+        val dao = db.unparsedSmsDao()
+        fun row(body: String, reason: UnparsedReason, sender: String = BANK) = UnparsedSmsEntity(
+            sender = sender,
+            bodyHash = body,
+            body = body,
+            receivedAt = 1,
+            reason = reason,
+        )
+        dao.insertOrIgnore(row("OTP 482913 for Rs 2499", UnparsedReason.NO_MATCH))
+        dao.insertOrIgnore(row("Rs 10 debited Ref 630199887766", UnparsedReason.NO_MATCH))
+        dao.insertOrIgnore(row("Rs 10 credited 99887766", UnparsedReason.UNKNOWN_SENDER, UNKNOWN_BANK))
+        dao.insertOrIgnore(row("hello 12345678", UnparsedReason.UNKNOWN_SENDER, "VM-OTHER"))
+
+        pipeline.scrubUnparsed()
+        pipeline.scrubUnparsed()
+
+        assertThat(dao.getAll().map { it.body })
+            .containsExactly("Rs 10 debited Ref ####", "Rs 10 credited ####")
+    }
+
+    @Test
     fun `auto-sort uses rules confirmed 3+ times, only when enabled, never for possible duplicates`() = runTest {
         val food = db.categoryDao().insert(
             CategoryEntity(
@@ -249,8 +287,10 @@ class IngestPipelineTest {
 
         override fun parse(sms: RawSms): SmsParseResult {
             parsed += sms
-            return next
+            return if (sms.body.startsWith(IGNORED_PREFIX)) SmsParseResult.Ignored else next
         }
+
+        override fun redactUnparsed(body: String) = body.replace(Regex("""\d{4,}"""), "####")
     }
 
     private fun txn(
@@ -282,5 +322,6 @@ class IngestPipelineTest {
         const val BANK = "AD-HDFCBK"
         const val UNKNOWN_BANK = "VM-NEWBNK-S"
         const val NOW = 42L
+        const val IGNORED_PREFIX = "OTP"
     }
 }

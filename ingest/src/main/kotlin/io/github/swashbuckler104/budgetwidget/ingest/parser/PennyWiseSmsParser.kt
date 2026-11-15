@@ -30,10 +30,20 @@ internal class PennyWiseSmsParser @Inject constructor() : SmsParser {
             parsersFor(sms.sender).firstNotNullOfOrNull { it.parse(sms.body, sms.sender, sms.receivedAt) }
         } catch (_: RuntimeException) {
             // Upstream regex code on unexpected input; keep the SMS for a bug report instead.
-            return SmsParseResult.Unparsed(UnparsedReason.PARSER_ERROR)
-        } ?: return SmsParseResult.Unparsed(UnparsedReason.NO_MATCH)
+            return unparsed(sms, UnparsedReason.PARSER_ERROR)
+        } ?: return unparsed(sms, UnparsedReason.NO_MATCH)
         return ParsedTransactionMapper.map(parsed, sms)
     }
+
+    override fun redactUnparsed(body: String): String = UnparsedRedactor.redact(body)
+
+    /** Only a message that reads like a transaction is worth a bug report; OTPs, offers and reminders are dropped. */
+    private fun unparsed(sms: RawSms, reason: UnparsedReason): SmsParseResult =
+        if (FinancialSmsHeuristic.looksLikeTransactionBody(sms.body)) {
+            SmsParseResult.Unparsed(reason)
+        } else {
+            SmsParseResult.Ignored
+        }
 
     private fun parsersFor(sender: String): List<BankParser> {
         if (PHONE_NUMBER.matches(sender.replace(SEPARATORS, ""))) return emptyList()

@@ -12,12 +12,19 @@ import io.github.swashbuckler104.budgetwidget.core.model.sms.RawSms
 internal object FinancialSmsHeuristic {
     fun looksLikeTransaction(sms: RawSms): Boolean {
         if (!BUSINESS_HEADER.matches(sms.sender) || PROMOTIONAL.matches(sms.sender)) return false
-        val body = sms.body
-        return AMOUNT.containsMatchIn(body) &&
-            MOVEMENT.containsMatchIn(body) &&
-            ACCOUNT.containsMatchIn(body) &&
-            !SECRET.containsMatchIn(body)
+        return looksLikeTransactionBody(sms.body)
     }
+
+    /**
+     * The body alone reads like a completed money movement: a rupee amount, a movement word and an
+     * account word, and no secret, reminder, offer or failure wording. Used for known bank senders
+     * too, so OTPs and promotions they send never reach the unparsed list.
+     */
+    fun looksLikeTransactionBody(body: String): Boolean = AMOUNT.containsMatchIn(body) &&
+        MOVEMENT.containsMatchIn(body) &&
+        ACCOUNT.containsMatchIn(body) &&
+        !SECRET.containsMatchIn(body) &&
+        !NOT_A_TRANSACTION.containsMatchIn(body)
 
     /** TRAI headers: `XX-NAME`, optionally with an `-S`/`-T`/`-G`/`-P` suffix; or a bare 6-letter name. */
     private val BUSINESS_HEADER = Regex("""^([A-Z]{2}-[A-Z0-9]{3,9}(-[A-Z])?|[A-Z]{6})$""", RegexOption.IGNORE_CASE)
@@ -32,6 +39,16 @@ internal object FinancialSmsHeuristic {
     )
     private val ACCOUNT =
         Regex("""\b(a/c|acct|account|card|upi|vpa|wallet|imps|neft|rtgs)\b""", RegexOption.IGNORE_CASE)
+
+    /**
+     * Reminders, future debits, bounced or declined payments, collect requests and offers. "Failed"
+     * is left out on purpose: a reversal reads "credited ... for failed UPI txn".
+     */
+    private val NOT_A_TRANSACTION = Regex(
+        """\b(is due|due on|due date|amt due|amount due|will be (debited|deducted|charged|auto-?debited)|""" +
+            """bounced|declined|has requested|requested rs|collect request|pre-?approved|apply now)\b""",
+        RegexOption.IGNORE_CASE,
+    )
 
     /** One-time passwords (also glued to digits: "OTP482913"), PINs and card codes. */
     private val SECRET = Regex(

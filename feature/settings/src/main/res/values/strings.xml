@@ -44,7 +44,7 @@
         <item quantity="one">%1$d message the app couldn\'t read</item>
         <item quantity="other">%1$d messages the app couldn\'t read</item>
     </plurals>
-    <string name="settings_unparsed_hint">Bank messages that did not become transactions. Copy one (remove your account number and name first) to report it so support for it can be added.</string>
+    <string name="settings_unparsed_hint">Bank messages that did not become transactions. Account, card, UPI and reference numbers are already hidden. Copy one (remove any names first) to report it so support for it can be added. OTPs and offers are never kept.</string>
     <string name="settings_unparsed_empty_title">Nothing here</string>
     <string name="settings_unparsed_empty_body">Every bank SMS so far became a transaction.</string>
     <string name="settings_unparsed_copied">Copied</string>

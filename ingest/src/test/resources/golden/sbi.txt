@@ -44,3 +44,14 @@ amount: 5210.75
 direction: IN
 last4: 2290
 card: true
+---
+# Storage rules (v1.0.2, hard constraint 4). From docs/handoff/probe-sms.tsv.
+name: Card bill due reminder is not a transaction
+sender: SBICRD
+body: Total Amt Due on your SBI Credit Card ending 2290 is Rs.18,420.00 & Min Amt Due is Rs.921.00. Payment due date is 20Nov26. Ignore if paid.
+type: IGNORED
+---
+name: Card payment received is kept for a parser fix
+sender: SBICRD
+body: We have received payment of Rs.5,000.00 via UPI & the same has been credited to your SBI Credit Card ending 2290. Your available limit is Rs.59,351.00.
+type: UNPARSED
