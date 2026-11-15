@@ -1,0 +1,31 @@
+L1-reminder-hdfc	AD-HDFCBK	Dear Customer, EMI of Rs.12,500.00 for your HDFC Bank Loan A/c XX4567 is due on 05-Nov-26. Please maintain sufficient balance in A/c XX8812. Ignore if already paid.
+L2-debit-ach-hdfc	AD-HDFCBK	UPDATE: INR 12,500.00 debited from HDFC Bank XX8812 on 05-NOV-26. Info: ACH D- BAJAJ FINANCE LTD-P400PHL1234567. Avl bal:INR 48,750.00
+L3-lender-received	VM-BAJAJF	Dear Customer, we have received your EMI payment of Rs. 12,500 towards your Loan A/c XX4567 on 05-11-2026. Thank you. Bajaj Finance
+L4-loan-ac-credited-hdfc	AD-HDFCBK	Rs.12,500.00 credited to your HDFC Bank Loan A/c XX4567 on 05-Nov-26 towards EMI repayment. Outstanding principal Rs.2,35,000.00
+L5-disbursal-hdfc	AD-HDFCBK	Update! INR 2,00,000.00 deposited in HDFC Bank A/c XX8812 on 01-NOV-26 for LOAN DISBURSEMENT-PL4567.Avl bal INR 2,61,250.00. Cheque deposits in A/C are subject to clearing
+L6-mandate-notice-hdfc	AD-HDFCBK	Dear Customer, Rs.12,500.00 will be debited from HDFC Bank A/c XX8812 on 05-Nov-26 towards BAJAJ FINANCE LTD (UMRN HDFC7012345678). Maintain sufficient balance.
+L7-sbi-emi-debit	ATMSBI	Dear Customer, Your A/C XXXXX5503 has a debit by transfer of Rs 8,450.00 on 05/11/26. Avl Bal Rs 14,200.00.-SBI
+L8-sbi-loan-credit	ATMSBI	Dear Customer, your SBI Loan A/c XXXXX9012 is credited with EMI Rs 8,450.00 on 05/11/26. -SBI
+L9-axis-emi-bounce	AX-AXISBK-S	Your EMI of INR 6,300.00 for Loan A/c no. XX771904 has bounced due to insufficient funds on 05-11-26. Charges apply. - Axis Bank
+C1-cc-bill-debit-hdfc	AD-HDFCBK	Rs.5000.00 debited from A/c XX8812 on 06-Nov-26 to sbicard.2290@sbi (UPI Ref No 630612345678)
+C2-cc-payment-received-sbi	SBICRD	We have received payment of Rs.5,000.00 via UPI & the same has been credited to your SBI Credit Card ending 2290. Your available limit is Rs.59,351.00.
+C3-cc-bill-due-sbi	SBICRD	Total Amt Due on your SBI Credit Card ending 2290 is Rs.18,420.00 & Min Amt Due is Rs.921.00. Payment due date is 20Nov26. Ignore if paid.
+S1-self-transfer-out-hdfc	AD-HDFCBK	Rs.10000.00 debited from A/c XX8812 on 07-Nov-26 to asha.self@kotak (UPI Ref No 630712345678)
+S2-self-transfer-in-kotak	JD-KOTAKB-S	Received Rs.10000.00 in your Kotak Bank AC X4821 from asha.r@okhdfcbank on 07-11-26.UPI Ref 630712345678. Not you, https://kotak.com/KBANKT/Fraud
+R1-refund-axis	AX-AXISBK-S	INR 418.00 credited to A/c no. XX604418 on 08-11-26 at 10:12:03 IST. Info- REFUND/BLINKIT. Avl bal: INR 22828.60 - Axis Bank
+R2-reversal-federal	AD-FEDBNK	Rs 320.00 reversed and credited to your A/c XX3071 on 08-11-2026 for failed UPI txn Ref No 630112233445. -Federal Bank
+O1-otp-hdfc	AD-HDFCBK	OTP is 482913 for txn of INR 2,499.00 at AMAZON on HDFC Bank card ending 1234. Valid till 10:42. Do not share OTP with anyone
+O2-declined-axis	AX-AXISBK-S	Transaction of INR 950 on Axis Bank Card no. XX2207 at ZOMATO was declined due to insufficient limit on 08-11-26.
+O3-collect-req-kotak	JD-KOTAKB-S	ravi.m42@okaxis has requested Rs.600.00 from you on Kotak UPI. Approve or decline in the app by 09-11-26.
+O4-promo-loan-offer	AD-HDFCBK	Pre-approved Personal Loan of Rs.5,00,000 at 10.5% for you! EMI from Rs.10,747. Apply now on HDFC Bank NetBanking. T&C
+O5-balance-federal	AD-FEDBNK	Your A/c XX3071 balance is Rs 31,840.25 as on 08-11-2026. -Federal Bank
+B1-jupiter-savings	JD-JUPITR-S	Rs.275.00 debited from your Jupiter account XX4410 via UPI to chaayos@ybl on 08-Nov-26. Ref 630812345678. -Federal Bank
+B2-slice-emi	AD-SLCEIT-S	Your slice EMI of Rs.1,150 for November has been paid successfully via autopay. Thank you - slice
+B3-kotak-atm	JD-KOTAKB-S	Rs.3000.00 withdrawn from Kotak Bank AC X4821 at ATM on 08-11-26. Avl Bal Rs.15250.40
+B4-sbi-salary	ATMSBI	Dear Customer, Your A/C XXXXX5503 has a credit by NEFT of Rs 82,000.00 on 01/11/26 by ACME TECHNOLOGIES. Avl Bal Rs 96,200.00.-SBI
+B5-hdfc-interest	AD-HDFCBK	Update! INR 412.00 deposited in HDFC Bank A/c XX8812 on 01-NOV-26 for Int.Pd:01-08-2026 to 31-10-2026.Avl bal INR 61,662.00.
+B6-federal-cashback	AD-FEDBNK	Rs 25.00 credited to your A/c XX3071 via UPI on 08NOV2026 12:05:30 UPI Ref no 630812345699 Bal:Rs 31865.25 -Federal Bank
+B7-hdfc-sip	AD-HDFCBK	UPDATE: INR 5,000.00 debited from HDFC Bank XX8812 on 07-NOV-26. Info: ACH D- INDIAN CLEARING CORP-MF12345. Avl bal:INR 43,750.00
+U1-unknown-bank-debit	VM-IDFCFB	Your A/C XXXXXXX1203 is debited by Rs. 640.00 on 08/11/26 12:11. New Bal :Rs. 9,112.40
+U2-personal-number	+919812345678	Bro I sent Rs 500 to your account, credited? check
+U3-unknown-wallet	JM-PAYTMB	Rs.150 debited from your Paytm Wallet for order at METRO RAIL. Wallet balance Rs.340.
