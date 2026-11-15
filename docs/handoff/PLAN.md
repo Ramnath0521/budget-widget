@@ -574,7 +574,7 @@ Setting "Keep original SMS text": Forever (default) / 90 days / 30 days. The rec
 nulls `smsBody` on sorted transactions older than the limit. No SQLCipher (reasoning in
 SECURITY_AUDIT section 4).
 
-### [ ] E7. Supply chain [F4, F5]
+### [x] E7. Supply chain [F4, F5] (1.0.3, ADR-0050)
 
 `gradle/verification-metadata.xml` with sha256 for all configurations, refresh steps in
 `CONTRIBUTING.md`. `actions/attest-build-provenance` on the release job (`id-token: write`,
