@@ -28,6 +28,9 @@ The [installation guide](#installation-guide) walks through the few prompts Andr
 - **More privacy.** OTPs, offers and reminders are never stored, kept bank messages have account,
   card, UPI and reference numbers masked, and amounts are hidden from screenshots and recent apps
   (Settings → Privacy, on by default).
+- **Help improve the parser.** *Settings → Help improve the parser* scans the last 90 days for bank
+  SMS the app couldn't read, masks them, shows you exactly what would be sent, and opens your mail
+  app. Nothing changes in your budget, and the app still has no internet access.
 
 ## Features
 
