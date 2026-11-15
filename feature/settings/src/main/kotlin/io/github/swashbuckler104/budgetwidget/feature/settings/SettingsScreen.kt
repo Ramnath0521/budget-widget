@@ -74,6 +74,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.swashbuckler104.budgetwidget.core.datastore.AppearanceSettings
+import io.github.swashbuckler104.budgetwidget.core.datastore.SmsRetention
 import io.github.swashbuckler104.budgetwidget.core.datastore.ThemeMode
 import java.time.LocalDate
 import java.time.LocalTime
@@ -144,6 +145,7 @@ fun SettingsRoute(
             setTheme = viewModel::setTheme,
             setDynamicColor = viewModel::setDynamicColor,
             setSecureScreen = viewModel::setSecureScreen,
+            setSmsRetention = viewModel::setSmsRetention,
             importOlder = viewModel::importOlder,
             openAccounts = onOpenAccounts,
             openSmsIssues = onOpenSmsIssues,
@@ -182,6 +184,7 @@ internal class SettingsActions(
     val setTheme: (ThemeMode) -> Unit = {},
     val setDynamicColor: (Boolean) -> Unit = {},
     val setSecureScreen: (Boolean) -> Unit = {},
+    val setSmsRetention: (SmsRetention) -> Unit = {},
     val importOlder: (days: Int) -> Unit = {},
     val openAccounts: () -> Unit = {},
     val openSmsIssues: () -> Unit = {},
@@ -281,7 +284,7 @@ internal fun SettingsScreen(
                 onCheckedChange = actions.setAutoSort,
             )
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            PrivacySection(state.secureScreen, actions)
+            PrivacySection(state.secureScreen, state.smsRetention, actions)
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             AppearanceSection(state.appearance, actions)
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -429,7 +432,7 @@ private const val PAISE_PER_RUPEE = 100L
 private const val MINUTES_PER_HOUR = 60
 
 @Composable
-private fun PrivacySection(secureScreen: Boolean, actions: SettingsActions) {
+private fun PrivacySection(secureScreen: Boolean, smsRetention: SmsRetention, actions: SettingsActions) {
     Column {
         SectionHeader(stringResource(R.string.settings_section_privacy))
         SwitchRow(
@@ -438,6 +441,25 @@ private fun PrivacySection(secureScreen: Boolean, actions: SettingsActions) {
             checked = secureScreen,
             onCheckedChange = actions.setSecureScreen,
         )
+        var picking by rememberSaveable { mutableStateOf(false) }
+        LinkRow(
+            title = stringResource(R.string.settings_sms_retention),
+            summary = stringResource(smsRetention.label),
+            onClick = { picking = true },
+        )
+        if (picking) {
+            ChoiceDialog(
+                title = stringResource(R.string.settings_sms_retention),
+                body = stringResource(R.string.settings_sms_retention_body),
+                options = SmsRetention.entries.map { stringResource(it.label) },
+                selected = smsRetention.ordinal,
+                onPick = {
+                    actions.setSmsRetention(SmsRetention.entries[it])
+                    picking = false
+                },
+                onDismiss = { picking = false },
+            )
+        }
     }
 }
 
@@ -635,12 +657,20 @@ private fun ChoiceDialog(
     selected: Int?,
     onPick: (Int) -> Unit,
     onDismiss: () -> Unit,
+    body: String? = null,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
             Column(modifier = Modifier.selectableGroup()) {
+                if (body != null) {
+                    Text(
+                        body,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(bottom = 8.dp),
+                    )
+                }
                 options.forEachIndexed { index, option ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -693,6 +723,13 @@ private val ThemeMode.label: Int
         ThemeMode.SYSTEM -> R.string.settings_theme_system
         ThemeMode.LIGHT -> R.string.settings_theme_light
         ThemeMode.DARK -> R.string.settings_theme_dark
+    }
+
+private val SmsRetention.label: Int
+    get() = when (this) {
+        SmsRetention.FOREVER -> R.string.settings_sms_retention_forever
+        SmsRetention.DAYS_90 -> R.string.settings_sms_retention_90
+        SmsRetention.DAYS_30 -> R.string.settings_sms_retention_30
     }
 
 private fun messageText(resources: Resources, message: SettingsMessage): String = when (message) {

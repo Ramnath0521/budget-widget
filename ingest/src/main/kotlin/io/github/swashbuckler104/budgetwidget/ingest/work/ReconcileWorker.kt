@@ -10,6 +10,7 @@ import androidx.work.workDataOf
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import io.github.swashbuckler104.budgetwidget.core.data.inbox.InboxWidgets
+import io.github.swashbuckler104.budgetwidget.core.data.ingest.SmsBodyRetention
 
 /** Periodic and on-demand inbox scan; with [backfillInput] it imports older messages instead. */
 @HiltWorker
@@ -18,6 +19,7 @@ internal class ReconcileWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val reconciler: InboxReconciler,
     private val widgets: InboxWidgets,
+    private val retention: SmsBodyRetention,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val backfillSince = inputData.getLong(KEY_BACKFILL_SINCE, NO_BACKFILL)
@@ -30,6 +32,8 @@ internal class ReconcileWorker @AssistedInject constructor(
                 reconciler.backfill(backfillSince)
             }
             if (result is InboxReconciler.Result.Scanned && result.inserted > 0) widgets.refreshNow()
+            // "Keep original SMS text" (ADR-0045): runs even without SMS permission.
+            retention.apply()
             Result.success()
         } catch (_: SQLException) {
             if (runAttemptCount < MAX_ATTEMPTS) Result.retry() else Result.failure()

@@ -54,6 +54,10 @@ interface UnparsedSmsDao {
     @Query("DELETE FROM unparsed_sms")
     suspend fun deleteAll()
 
+    /** Entries received before [beforeMillis] (epoch ms, UTC; ADR-0045). */
+    @Query("DELETE FROM unparsed_sms WHERE receivedAt < :beforeMillis")
+    suspend fun deleteBefore(beforeMillis: Long): Int
+
     @Query("SELECT COUNT(*) FROM unparsed_sms")
     suspend fun count(): Int
 

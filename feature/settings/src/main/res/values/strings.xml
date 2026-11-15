@@ -42,6 +42,11 @@
     <string name="settings_section_privacy">Privacy</string>
     <string name="settings_secure_screen">Hide amounts in screenshots &amp; recents</string>
     <string name="settings_secure_screen_summary">Recent apps shows a blank card, and screenshots and screen sharing of the app are blocked</string>
+    <string name="settings_sms_retention">Keep original SMS text</string>
+    <string name="settings_sms_retention_body">For sorted transactions older than this, the bank SMS is deleted from the app. Amount, merchant, account and category stay. Older unparsed bank SMS are removed too. Transactions still in the inbox keep their SMS, and your SMS app is never touched.</string>
+    <string name="settings_sms_retention_forever">Forever</string>
+    <string name="settings_sms_retention_90">90 days</string>
+    <string name="settings_sms_retention_30">30 days</string>
     <string name="settings_feedback">Help improve the parser</string>
     <string name="settings_feedback_summary">Scan the last 90 days for bank SMS that weren\'t read and send them to the developer. Your budget isn\'t changed.</string>
     <string name="feedback_title">Help improve the parser</string>

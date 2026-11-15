@@ -23,6 +23,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
+import io.github.swashbuckler104.budgetwidget.core.datastore.SmsRetention
 import io.github.swashbuckler104.budgetwidget.core.datastore.ThemeMode
 import io.github.swashbuckler104.budgetwidget.core.model.Account
 import io.github.swashbuckler104.budgetwidget.core.model.AccountKind
@@ -52,6 +53,7 @@ class SettingsScreensTest {
                 setNudgeTime = { _, _ -> },
                 allowNotifications = {},
                 setTheme = { calls += "theme:$it" },
+                setSmsRetention = { calls += "keep:$it" },
                 importOlder = { calls += "import:$it" },
                 startFresh = { calls += "fresh" },
                 restore = { calls += "restore" },
@@ -89,6 +91,17 @@ class SettingsScreensTest {
         assertThat(
             calls,
         ).containsExactly("theme:${ThemeMode.DARK}", "import:90", "unparsed", "fresh", "restore").inOrder()
+    }
+
+    @Test
+    fun `keep original SMS text explains what goes before offering the limits`() {
+        showSettings()
+        scrollTo("Keep original SMS text")
+        compose.onNodeWithText("Forever").performClick()
+        compose.onNodeWithText("Amount, merchant, account and category stay", substring = true).assertExists()
+        compose.onNodeWithText("30 days").performClick()
+        compose.onNodeWithText("90 days").assertDoesNotExist()
+        assertThat(calls).containsExactly("keep:${SmsRetention.DAYS_30}")
     }
 
     @Test

@@ -568,7 +568,7 @@ AES-256-GCM, `javax.crypto` only. File = small JSON header (`format`, `kdf`, `it
 is a clean error. CSV export stays plaintext with a warning line. Tests: round trip, wrong
 passphrase, truncated file, old plaintext backup still restores.
 
-### [ ] E6. SMS body retention [F3]
+### [x] E6. SMS body retention [F3] (1.0.3, ADR-0045)
 
 Setting "Keep original SMS text": Forever (default) / 90 days / 30 days. The reconcile worker
 nulls `smsBody` on sorted transactions older than the limit. No SQLCipher (reasoning in

@@ -8,12 +8,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.swashbuckler104.budgetwidget.core.data.WallClock
 import io.github.swashbuckler104.budgetwidget.core.data.backup.DataTransfer
 import io.github.swashbuckler104.budgetwidget.core.data.backup.RestoreResult
+import io.github.swashbuckler104.budgetwidget.core.data.ingest.SmsBodyRetention
 import io.github.swashbuckler104.budgetwidget.core.data.ingest.SmsSync
 import io.github.swashbuckler104.budgetwidget.core.data.repository.TransactionRepository
 import io.github.swashbuckler104.budgetwidget.core.datastore.AppearanceSettings
 import io.github.swashbuckler104.budgetwidget.core.datastore.NotificationSettings
 import io.github.swashbuckler104.budgetwidget.core.datastore.NudgeSettings
 import io.github.swashbuckler104.budgetwidget.core.datastore.SettingsStore
+import io.github.swashbuckler104.budgetwidget.core.datastore.SmsRetention
 import io.github.swashbuckler104.budgetwidget.core.datastore.ThemeMode
 import java.io.IOException
 import java.io.OutputStream
@@ -40,6 +42,7 @@ data class SettingsUiState(
     val autoSort: Boolean = false,
     val appearance: AppearanceSettings = AppearanceSettings(),
     val secureScreen: Boolean = true,
+    val smsRetention: SmsRetention = SmsRetention.FOREVER,
     val unparsedCount: Int = 0,
     /** A backup, restore, export or reset is running: its buttons are disabled. */
     val busy: Boolean = false,
@@ -84,6 +87,7 @@ class SettingsViewModel @Inject constructor(
     private val sync: SmsSync,
     private val clock: WallClock,
     private val resolver: ContentResolver,
+    private val retention: SmsBodyRetention,
     transactions: TransactionRepository,
 ) : ViewModel() {
     private val busy = MutableStateFlow(false)
@@ -100,8 +104,8 @@ class SettingsViewModel @Inject constructor(
         settings.appearance,
         transactions.observeUnparsedCount(),
         combine(busy, restorePrompt, ::Pair),
-        settings.secureScreen,
-    ) { (notifications, nudge, auto), appearance, unparsed, (working, prompt), secure ->
+        combine(settings.secureScreen, settings.smsRetention, ::Pair),
+    ) { (notifications, nudge, auto), appearance, unparsed, (working, prompt), (secure, keepSms) ->
         SettingsUiState(
             loaded = true,
             notifications = notifications,
@@ -109,6 +113,7 @@ class SettingsViewModel @Inject constructor(
             autoSort = auto,
             appearance = appearance,
             secureScreen = secure,
+            smsRetention = keepSms,
             unparsedCount = unparsed,
             busy = working,
             restorePrompt = prompt,
@@ -133,6 +138,12 @@ class SettingsViewModel @Inject constructor(
     fun setTheme(theme: ThemeMode) = launch { settings.setTheme(theme) }
 
     fun setSecureScreen(enabled: Boolean) = launch { settings.setSecureScreen(enabled) }
+
+    /** A shorter limit drops older SMS text right away, not at the next scan (ADR-0045). */
+    fun setSmsRetention(keep: SmsRetention) = launch {
+        settings.setSmsRetention(keep)
+        retention.apply(keep)
+    }
 
     fun setDynamicColor(enabled: Boolean) = launch { settings.setDynamicColor(enabled) }
 

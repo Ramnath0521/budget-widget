@@ -12,15 +12,22 @@ import io.github.swashbuckler104.budgetwidget.core.data.backup.DataTransfer
 import io.github.swashbuckler104.budgetwidget.core.data.category.CategorySeeder
 import io.github.swashbuckler104.budgetwidget.core.data.inbox.InboxEvents
 import io.github.swashbuckler104.budgetwidget.core.data.ingest.IngestPipeline
+import io.github.swashbuckler104.budgetwidget.core.data.ingest.SmsBodyRetention
 import io.github.swashbuckler104.budgetwidget.core.data.ingest.SmsSync
 import io.github.swashbuckler104.budgetwidget.core.data.repository.TransactionRepository
 import io.github.swashbuckler104.budgetwidget.core.database.BudgetDatabase
+import io.github.swashbuckler104.budgetwidget.core.database.entity.TransactionEntity
 import io.github.swashbuckler104.budgetwidget.core.datastore.AppearanceSettings
 import io.github.swashbuckler104.budgetwidget.core.datastore.IngestCheckpointStore
 import io.github.swashbuckler104.budgetwidget.core.datastore.NotificationSettings
 import io.github.swashbuckler104.budgetwidget.core.datastore.NudgeSettings
 import io.github.swashbuckler104.budgetwidget.core.datastore.SettingsStore
+import io.github.swashbuckler104.budgetwidget.core.datastore.SmsRetention
 import io.github.swashbuckler104.budgetwidget.core.datastore.ThemeMode
+import io.github.swashbuckler104.budgetwidget.core.model.Direction
+import io.github.swashbuckler104.budgetwidget.core.model.ParserType
+import io.github.swashbuckler104.budgetwidget.core.model.TransactionSource
+import io.github.swashbuckler104.budgetwidget.core.model.TransactionStatus
 import io.github.swashbuckler104.budgetwidget.core.model.sms.RawSms
 import io.github.swashbuckler104.budgetwidget.core.model.sms.SmsParseResult
 import io.github.swashbuckler104.budgetwidget.core.model.sms.SmsParser
@@ -29,6 +36,7 @@ import java.io.File
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -36,6 +44,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -98,7 +108,9 @@ class SettingsViewModelTest {
                 now
             }, pipeline, sync)
         val repository = TransactionRepository(db.transactionDao(), db.unparsedSmsDao(), db.accountDao())
-        return SettingsViewModel(store, transfer, sync, { now }, context.contentResolver, repository) to store
+        val retention = SmsBodyRetention(db, store) { now }
+        return SettingsViewModel(store, transfer, sync, { now }, context.contentResolver, retention, repository) to
+            store
     }
 
     @Test
@@ -136,6 +148,45 @@ class SettingsViewModelTest {
         assertThat(store.autoSortEnabled()).isTrue()
         assertThat(store.nudge.first()).isEqualTo(NudgeSettings(enabled = false, minuteOfDay = 20 * 60 + 30))
         assertThat(store.appearance.first()).isEqualTo(AppearanceSettings(ThemeMode.DARK, dynamicColor = false))
+    }
+
+    @Test
+    fun `a shorter SMS limit is shown and drops older SMS text right away`() = runTest {
+        val (viewModel, store) = viewModel()
+        val day = 24L * 60 * 60 * 1000
+        val id = db.transactionDao().insert(
+            TransactionEntity(
+                txnHash = "old",
+                source = TransactionSource.SMS,
+                amountPaise = 100_00,
+                direction = Direction.OUT,
+                parserType = ParserType.EXPENSE,
+                merchantRaw = null,
+                merchantDisplay = null,
+                merchantKey = null,
+                accountId = null,
+                occurredAt = now - 31 * day,
+                smsSender = "AD-BANKSM",
+                smsBody = "Rs 100 debited",
+                reference = null,
+                balanceAfterPaise = null,
+                isCard = false,
+                status = TransactionStatus.IGNORED,
+                isBackfill = false,
+                createdAt = 0,
+                updatedAt = 0,
+            ),
+        )
+
+        viewModel.setSmsRetention(SmsRetention.DAYS_30)
+
+        assertThat(viewModel.state.first { it.smsRetention == SmsRetention.DAYS_30 }.loaded).isTrue()
+        assertThat(store.smsRetention.first()).isEqualTo(SmsRetention.DAYS_30)
+        withContext(Dispatchers.Default) {
+            withTimeout(IO_TIMEOUT) {
+                while (db.transactionDao().get(id)!!.smsBody != null) delay(10)
+            }
+        }
     }
 
     @Test
