@@ -124,6 +124,28 @@ class TransactionEditorTest {
     }
 
     @Test
+    fun `a manual transaction added from an SMS keeps the SMS as its source`() = runTest {
+        val food = cat("Food")
+        val manual = ManualTransaction(
+            240_00,
+            Direction.OUT,
+            food,
+            null,
+            null,
+            5_000,
+            smsSender = "AD-NEWBNK",
+            smsBody = "Rs.240.00 debited from A/c XXXXXX81",
+        )
+        val id = (editor.addManual(manual) as EditResult.Saved).id
+        with(db.transactionDao().get(id)!!) {
+            assertThat(source).isEqualTo(TransactionSource.MANUAL)
+            assertThat(smsSender).isEqualTo("AD-NEWBNK")
+            assertThat(smsBody).isEqualTo("Rs.240.00 debited from A/c XXXXXX81")
+            assertThat(txnHash).isNull()
+        }
+    }
+
+    @Test
     fun `manual add validates amount and category`() = runTest {
         val parent = cat("Food")
         cat("Groceries", parent = parent)

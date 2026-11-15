@@ -295,7 +295,7 @@ inbox count; compare with the `expect-*` values.
   run or an `@` (a redaction miss).
 - Link from `CONTRIBUTING.md` and `docs/PARSER_UPGRADE.md`.
 
-### B5. "Teach this message" (assessed, deferred)
+### B5. "Teach this message" (assessed, deferred; the small version shipped in 1.0.3, ADR-0048)
 
 **Not in 1.0.2; revisit for 1.0.3 or later.**
 

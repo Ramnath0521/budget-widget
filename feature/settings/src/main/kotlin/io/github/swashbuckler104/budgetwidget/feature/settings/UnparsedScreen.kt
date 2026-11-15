@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.DeleteSweep
@@ -28,6 +29,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -87,10 +89,19 @@ class UnparsedViewModel @Inject constructor(private val transactions: Transactio
     }
 }
 
+/**
+ * [addSheet] shows the add-transaction sheet for one entry and reports whether a transaction was
+ * added (ADR-0048). The app supplies it, since this feature doesn't depend on the transactions one.
+ */
 @Composable
-fun UnparsedRoute(onBack: () -> Unit, modifier: Modifier = Modifier, viewModel: UnparsedViewModel = hiltViewModel()) {
+fun UnparsedRoute(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    addSheet: @Composable (unparsedId: Long, onDone: (added: Boolean) -> Unit) -> Unit = { _, _ -> },
+    viewModel: UnparsedViewModel = hiltViewModel(),
+) {
     val items by viewModel.items.collectAsStateWithLifecycle()
-    UnparsedScreen(items, onBack, viewModel::delete, viewModel::deleteAll, modifier)
+    UnparsedScreen(items, onBack, viewModel::delete, viewModel::deleteAll, modifier, addSheet)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -101,8 +112,11 @@ internal fun UnparsedScreen(
     onDelete: (Long) -> Unit,
     onDeleteAll: () -> Unit,
     modifier: Modifier = Modifier,
+    addSheet: @Composable (unparsedId: Long, onDone: (added: Boolean) -> Unit) -> Unit = { _, _ -> },
 ) {
     var confirmAll by rememberSaveable { mutableStateOf(false) }
+    var adding by rememberSaveable { mutableStateOf<Long?>(null) }
+    val added = stringResource(R.string.settings_unparsed_added)
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val clipboard = LocalClipboard.current
@@ -162,9 +176,16 @@ internal fun UnparsedScreen(
                             }
                         },
                         onDelete = { onDelete(sms.id) },
+                        onAdd = { adding = sms.id },
                     )
                 }
             }
+        }
+    }
+    adding?.let { id ->
+        addSheet(id) { done ->
+            adding = null
+            if (done) scope.launch { snackbar.showSnackbar(added) }
         }
     }
     if (confirmAll) {
@@ -183,7 +204,7 @@ internal fun UnparsedScreen(
 }
 
 @Composable
-private fun UnparsedCard(sms: UnparsedSms, onCopy: () -> Unit, onDelete: () -> Unit) {
+private fun UnparsedCard(sms: UnparsedSms, onCopy: () -> Unit, onDelete: () -> Unit, onAdd: () -> Unit) {
     val locale = LocalConfiguration.current.locales[0]
     val time = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT).withLocale(locale)
         .format(Instant.ofEpochMilli(sms.receivedAt).atZone(ZoneId.systemDefault()))
@@ -220,6 +241,15 @@ private fun UnparsedCard(sms: UnparsedSms, onCopy: () -> Unit, onDelete: () -> U
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(end = 12.dp, bottom = 8.dp),
                 )
+            }
+            if (sms.body != null) {
+                TextButton(onClick = onAdd, modifier = Modifier.padding(bottom = 4.dp)) {
+                    Icon(Icons.Rounded.Add, contentDescription = null)
+                    Text(
+                        stringResource(R.string.settings_unparsed_add),
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
+                }
             }
         }
     }

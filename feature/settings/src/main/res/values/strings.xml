@@ -78,11 +78,13 @@
     <!-- Where "Help improve the parser" emails go (owner's choice, ADR-0043). Public in the source and the APK. -->
     <string name="feedback_email_address" translatable="false">skrobotics104@gmail.com</string>
     <string name="settings_unparsed">Unparsed bank SMS</string>
+    <string name="settings_unparsed_add">Add as transaction</string>
+    <string name="settings_unparsed_added">Added to transactions</string>
     <plurals name="settings_unparsed_summary">
         <item quantity="one">%1$d message the app couldn\'t read</item>
         <item quantity="other">%1$d messages the app couldn\'t read</item>
     </plurals>
-    <string name="settings_unparsed_hint">Bank messages that did not become transactions. Account, card, UPI and reference numbers are already hidden. Copy one (remove any names first) to report it so support for it can be added. OTPs and offers are never kept.</string>
+    <string name="settings_unparsed_hint">Bank messages that did not become transactions. Account, card, UPI and reference numbers are already hidden. Add one as a transaction yourself, or copy one (remove any names first) to report it so support for it can be added. OTPs and offers are never kept.</string>
     <string name="settings_unparsed_empty_title">Nothing here</string>
     <string name="settings_unparsed_empty_body">Every bank SMS so far became a transaction.</string>
     <string name="settings_unparsed_copied">Copied</string>

@@ -58,6 +58,9 @@ class TransactionRepository @Inject constructor(
         rows.map { UnparsedSms(it.id, it.sender, it.body, it.receivedAt, it.reason) }
     }
 
+    suspend fun getUnparsed(id: Long): UnparsedSms? =
+        unparsedSmsDao.get(id)?.let { UnparsedSms(it.id, it.sender, it.body, it.receivedAt, it.reason) }
+
     /** Deletes one entry; a later inbox rescan won't record it again ([UnparsedDismissals]). */
     suspend fun deleteUnparsed(id: Long) {
         unparsedSmsDao.receivedAt(id)?.let { dismissals.dismissUpTo(it) }

@@ -20,7 +20,7 @@ copied to Google Drive either.
 ## What the app stores (on your phone only)
 
 - Transactions parsed from bank SMS: amount, direction, merchant, account's last 4 digits, time, and the original SMS text (so you can check it). By default the SMS text is kept for as long as the transaction; *Settings → Keep original SMS text* can delete it after 90 or 30 days once the transaction is sorted. The amount, merchant, account and category stay. The same setting removes unparsed bank SMS older than the limit.
-- Bank SMS the parser couldn't understand, so you can report a parser bug. Before a message is kept, account and card numbers (all but the last 2 digits), UPI IDs, links, and reference and phone numbers are masked. One-time passwords, offers, reminders and declined or bounced payments are never kept, even from your bank. This list holds at most 200 messages and you can delete it at any time (*Settings → Unparsed bank SMS*).
+- Bank SMS the parser couldn't understand, so you can report a parser bug. Before a message is kept, account and card numbers (all but the last 2 digits), UPI IDs, links, and reference and phone numbers are masked. One-time passwords, offers, reminders and declined or bounced payments are never kept, even from your bank. This list holds at most 200 messages and you can delete it at any time (*Settings → Unparsed bank SMS*). If you add one as a transaction yourself, its masked text moves to that transaction as its source.
 - Your categories, merchant rules, notes and settings.
 
 Personal SMS and one-time passwords are never stored.

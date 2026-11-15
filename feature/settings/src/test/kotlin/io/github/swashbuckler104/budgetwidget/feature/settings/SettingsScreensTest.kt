@@ -1,10 +1,13 @@
 package io.github.swashbuckler104.budgetwidget.feature.settings
 
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.filterToOne
@@ -194,6 +197,33 @@ class SettingsScreensTest {
         compose.onNodeWithContentDescription("Delete all").performClick()
         compose.onNodeWithText("Delete").performClick()
         assertThat(calls).containsExactly("delete:3", "all").inOrder()
+    }
+
+    @Test
+    fun `add as transaction opens the sheet for that message and says when it was added`() {
+        val sms = UnparsedSms(3, "VM-NEWBNK-S", "Rs 10 credited to A/c XX1", 0, UnparsedReason.UNKNOWN_SENDER)
+        val noBody = UnparsedSms(4, "VM-OLDBNK-S", null, 0, UnparsedReason.NO_MATCH)
+        compose.setContent {
+            UnparsedScreen(
+                items = listOf(sms, noBody),
+                onBack = {},
+                onDelete = {},
+                onDeleteAll = {},
+                addSheet = { id, onDone ->
+                    calls += "sheet:$id"
+                    TextButton(onClick = { onDone(true) }) {
+                        Text("fake save")
+                    }
+                },
+            )
+        }
+        // Only a message with text can be added.
+        compose.onAllNodesWithText("Add as transaction").assertCountEquals(1)
+        compose.onNodeWithText("Add as transaction").performClick()
+        compose.onNodeWithText("fake save").performClick()
+        compose.onNodeWithText("Added to transactions").assertExists()
+        compose.onNodeWithText("fake save").assertDoesNotExist()
+        assertThat(calls.distinct()).containsExactly("sheet:3")
     }
 
     @Test

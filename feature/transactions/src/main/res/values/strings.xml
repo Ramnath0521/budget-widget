@@ -142,6 +142,7 @@
     <string name="edit_delete">Delete</string>
     <string name="edit_save">Save</string>
     <string name="add_title">Add cash transaction</string>
+    <string name="add_title_sms">Add transaction from SMS</string>
     <string name="add_when">When</string>
     <string name="add_merchant">Merchant or description (optional)</string>
     <string name="add_save">Add</string>

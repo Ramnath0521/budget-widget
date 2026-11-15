@@ -37,6 +37,7 @@ import io.github.swashbuckler104.budgetwidget.feature.settings.AccountsRoute
 import io.github.swashbuckler104.budgetwidget.feature.settings.ParserFeedbackRoute
 import io.github.swashbuckler104.budgetwidget.feature.settings.SettingsRoute
 import io.github.swashbuckler104.budgetwidget.feature.settings.UnparsedRoute
+import io.github.swashbuckler104.budgetwidget.feature.transactions.edit.AddFromSmsSheet
 import io.github.swashbuckler104.budgetwidget.feature.transactions.list.TransactionsRoute
 import kotlin.reflect.KClass
 import kotlinx.serialization.Serializable
@@ -196,7 +197,12 @@ fun BudgetWidgetNavHost(
                 )
             }
             composable<AccountsDestination> { AccountsRoute(onBack = { navController.popBackStack() }) }
-            composable<UnparsedDestination> { UnparsedRoute(onBack = { navController.popBackStack() }) }
+            composable<UnparsedDestination> {
+                UnparsedRoute(
+                    onBack = { navController.popBackStack() },
+                    addSheet = { id, onDone -> AddFromSmsSheet(id, onDone) },
+                )
+            }
             composable<ParserFeedbackDestination> { ParserFeedbackRoute(onBack = { navController.popBackStack() }) }
             composable<AboutDestination> { AboutRoute(onBack = { navController.popBackStack() }) }
         }

@@ -42,6 +42,9 @@ interface UnparsedSmsDao {
     @Query("UPDATE unparsed_sms SET body = :body WHERE id = :id")
     suspend fun updateBody(id: Long, body: String)
 
+    @Query("SELECT * FROM unparsed_sms WHERE id = :id")
+    suspend fun get(id: Long): UnparsedSmsEntity?
+
     @Query("SELECT receivedAt FROM unparsed_sms WHERE id = :id")
     suspend fun receivedAt(id: Long): Long?
 
