@@ -36,7 +36,9 @@ internal object FinancialSmsHeuristic {
     private val AMOUNT =
         Regex("""(?:(?<![a-z])(?:rs\.?|inr)|₹)\s*\d[\d,]*(?:\.\d{1,2})?""", RegexOption.IGNORE_CASE)
     private val MOVEMENT = Regex(
-        """\b(credited|debited|spent|received|withdrawn|deposited|paid|sent|transferred)\b""",
+        // "debit by transfer of", "credit by NEFT of" (SBI) use the nouns; "credit card" alone does not count.
+        """\b(credited|debited|spent|received|withdrawn|deposited|paid|sent|transferred)\b|""" +
+            """\b(debit|credit)\s+(by|of)\b""",
         RegexOption.IGNORE_CASE,
     )
     private val ACCOUNT =

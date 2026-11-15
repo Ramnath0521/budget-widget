@@ -87,6 +87,7 @@ fun SettingsRoute(
     onOpenSmsIssues: () -> Unit,
     onOpenAbout: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenParserFeedback: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -146,6 +147,7 @@ fun SettingsRoute(
             importOlder = viewModel::importOlder,
             openAccounts = onOpenAccounts,
             openSmsIssues = onOpenSmsIssues,
+            openParserFeedback = onOpenParserFeedback,
             openAbout = onOpenAbout,
             exportCsv = { export.launch(fileName("transactions", "csv")) },
             backup = { backup.launch(fileName("backup", "json")) },
@@ -178,6 +180,7 @@ internal class SettingsActions(
     val importOlder: (days: Int) -> Unit = {},
     val openAccounts: () -> Unit = {},
     val openSmsIssues: () -> Unit = {},
+    val openParserFeedback: () -> Unit = {},
     val openAbout: () -> Unit = {},
     val exportCsv: () -> Unit = {},
     val backup: () -> Unit = {},
@@ -477,6 +480,11 @@ private fun SmsSection(unparsedCount: Int, actions: SettingsActions) {
             title = stringResource(R.string.settings_unparsed),
             summary = pluralStringResource(R.plurals.settings_unparsed_summary, unparsedCount, unparsedCount),
             onClick = actions.openSmsIssues,
+        )
+        LinkRow(
+            title = stringResource(R.string.settings_feedback),
+            summary = stringResource(R.string.settings_feedback_summary),
+            onClick = actions.openParserFeedback,
         )
         LinkRow(
             title = stringResource(R.string.settings_accounts),

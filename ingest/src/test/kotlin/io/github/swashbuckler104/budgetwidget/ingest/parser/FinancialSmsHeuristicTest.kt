@@ -56,6 +56,10 @@ class FinancialSmsHeuristicTest {
             body("received payment of Rs.5,000.00 via UPI & credited to your SBI Credit Card ending 2290"),
         ).isFalse()
         assertThat(body("we have received your EMI payment of Rs. 12,500 towards your Loan A/c XX4567")).isFalse()
+        // SBI writes the movement as a noun.
+        assertThat(body("Your A/C XXXXX5503 has a debit by transfer of Rs 8,450.00 on 05/11/26. -SBI")).isTrue()
+        assertThat(body("Your A/C XXXXX5503 has a credit by NEFT of Rs 82,000.00 on 01/11/26 by ACME. -SBI")).isTrue()
+        assertThat(body("Get Rs 500 off on your credit card account, limited time!")).isFalse()
         // Bank SMS from a sender that fails the header check (spaces) are still judged by the body.
         assertThat(body("Rs.649.00 spent on your SBI Credit Card ending with 2290 on 05Nov26.")).isTrue()
     }

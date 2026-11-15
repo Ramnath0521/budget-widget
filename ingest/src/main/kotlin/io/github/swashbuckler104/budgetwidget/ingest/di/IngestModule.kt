@@ -8,8 +8,10 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import io.github.swashbuckler104.budgetwidget.core.data.feedback.ParserFeedbackScanner
 import io.github.swashbuckler104.budgetwidget.core.data.ingest.SmsSync
 import io.github.swashbuckler104.budgetwidget.core.model.sms.SmsParser
+import io.github.swashbuckler104.budgetwidget.ingest.feedback.InboxParserFeedbackScanner
 import io.github.swashbuckler104.budgetwidget.ingest.parser.PennyWiseSmsParser
 import io.github.swashbuckler104.budgetwidget.ingest.work.ContentResolverSmsInbox
 import io.github.swashbuckler104.budgetwidget.ingest.work.IngestWorkScheduler
@@ -26,6 +28,9 @@ internal abstract class IngestModule {
 
     @Binds
     abstract fun smsInbox(impl: ContentResolverSmsInbox): SmsInboxSource
+
+    @Binds
+    abstract fun parserFeedback(impl: InboxParserFeedbackScanner): ParserFeedbackScanner
 
     companion object {
         /** Requires the Application to implement `Configuration.Provider` (on-demand init). */

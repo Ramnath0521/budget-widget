@@ -34,6 +34,7 @@ import io.github.swashbuckler104.budgetwidget.feature.analysis.AnalysisRoute
 import io.github.swashbuckler104.budgetwidget.feature.categories.CategoriesRoute
 import io.github.swashbuckler104.budgetwidget.feature.settings.AboutRoute
 import io.github.swashbuckler104.budgetwidget.feature.settings.AccountsRoute
+import io.github.swashbuckler104.budgetwidget.feature.settings.ParserFeedbackRoute
 import io.github.swashbuckler104.budgetwidget.feature.settings.SettingsRoute
 import io.github.swashbuckler104.budgetwidget.feature.settings.UnparsedRoute
 import io.github.swashbuckler104.budgetwidget.feature.transactions.list.TransactionsRoute
@@ -57,6 +58,9 @@ data object AccountsDestination
 
 @Serializable
 data object UnparsedDestination
+
+@Serializable
+data object ParserFeedbackDestination
 
 @Serializable
 data object AboutDestination
@@ -186,10 +190,14 @@ fun BudgetWidgetNavHost(
                     onOpenAccounts = { navController.navigate(AccountsDestination) { launchSingleTop = true } },
                     onOpenSmsIssues = { navController.navigate(UnparsedDestination) { launchSingleTop = true } },
                     onOpenAbout = { navController.navigate(AboutDestination) { launchSingleTop = true } },
+                    onOpenParserFeedback = {
+                        navController.navigate(ParserFeedbackDestination) { launchSingleTop = true }
+                    },
                 )
             }
             composable<AccountsDestination> { AccountsRoute(onBack = { navController.popBackStack() }) }
             composable<UnparsedDestination> { UnparsedRoute(onBack = { navController.popBackStack() }) }
+            composable<ParserFeedbackDestination> { ParserFeedbackRoute(onBack = { navController.popBackStack() }) }
             composable<AboutDestination> { AboutRoute(onBack = { navController.popBackStack() }) }
         }
     }

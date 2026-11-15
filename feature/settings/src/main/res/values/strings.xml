@@ -42,6 +42,27 @@
     <string name="settings_section_privacy">Privacy</string>
     <string name="settings_secure_screen">Hide amounts in screenshots &amp; recents</string>
     <string name="settings_secure_screen_summary">Recent apps shows a blank card, and screenshots and screen sharing of the app are blocked</string>
+    <string name="settings_feedback">Help improve the parser</string>
+    <string name="settings_feedback_summary">Scan the last 90 days for bank SMS that weren\'t read and send them to the developer. Your budget isn\'t changed.</string>
+    <string name="feedback_title">Help improve the parser</string>
+    <string name="feedback_intro">This looks through the last 90 days of SMS for bank messages the app couldn\'t read, so support for them can be added.\n\n• It runs only now, on this phone, and changes nothing: no transactions, streaks, widgets or notifications.\n• Personal messages, OTPs, offers and reminders are skipped.\n• Account, card, UPI, reference and phone numbers are masked before you see them.\n• You see exactly what will be sent, can remove any message, and your own mail app sends it. The app itself has no internet access.</string>
+    <string name="feedback_scan">Scan last 90 days</string>
+    <string name="feedback_scanning">Reading SMS on this phone…</string>
+    <string name="feedback_no_permission">SMS access is off, so there is nothing to scan. Turn it on in App info to use this.</string>
+    <string name="feedback_nothing">Nothing to send: every bank SMS from the last 90 days was read.</string>
+    <plurals name="feedback_preview">
+        <item quantity="one">%1$d message will be sent</item>
+        <item quantity="other">%1$d messages will be sent</item>
+    </plurals>
+    <string name="feedback_preview_hint">This is exactly what will be shared. Remove anything you don\'t want to send, and check for names: they aren\'t masked.</string>
+    <string name="feedback_remove">Remove message from %1$s</string>
+    <string name="feedback_email">Email</string>
+    <string name="feedback_save">Save file</string>
+    <string name="feedback_saved">File saved</string>
+    <string name="feedback_no_mail_app">No email app found. Use Save file instead.</string>
+    <string name="feedback_email_subject">Budget Widget: bank SMS the parser could not read</string>
+    <!-- Where "Help improve the parser" emails go (owner's choice, ADR-0043). Public in the source and the APK. -->
+    <string name="feedback_email_address" translatable="false">skrobotics104@gmail.com</string>
     <string name="settings_unparsed">Unparsed bank SMS</string>
     <plurals name="settings_unparsed_summary">
         <item quantity="one">%1$d message the app couldn\'t read</item>
