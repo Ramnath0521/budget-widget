@@ -65,6 +65,9 @@ jobs:
       - name: Check APK permissions (no INTERNET, allowlist only)
         run: scripts/check-permissions.sh app/build/outputs/apk/release/app-release.apk
 
+      - name: Check release APK (not debuggable, no network code)
+        run: scripts/check-release-apk.sh app/build/outputs/apk/release/app-release.apk
+
       - name: Check every view model is in the Hilt component
         run: scripts/check-hilt-viewmodels.sh release
 

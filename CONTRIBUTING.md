@@ -14,6 +14,7 @@ v1 scope is fixed.
 ./gradlew spotlessApply                                 # format
 ./gradlew spotlessCheck lint test assembleRelease       # everything CI runs (plus the scripts below)
 scripts/check-permissions.sh app/build/outputs/apk/release/app-release-unsigned.apk
+scripts/check-release-apk.sh app/build/outputs/apk/release/app-release-unsigned.apk   # not debuggable, no network code
 scripts/check-module-boundaries.sh
 ```
 

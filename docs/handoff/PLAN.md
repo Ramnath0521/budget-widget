@@ -545,7 +545,7 @@ recents shows a blank card; with the toggle on, `adb exec-out screencap` returns
 `core/data/.../inbox/InboxEvents.kt:28`: log the listener class and the exception class name
 only. Add a lint or grep check in CI: no `Log.` call outside an allowlist of files.
 
-### [ ] E4. "Does not try" dex check [F8]
+### [x] E4. "Does not try" dex check [F8]
 
 Extend `scripts/check-permissions.sh` (or a new `check-no-network-code.sh`): fail when the release
 dex references `Ljava/net/Socket`, `Ljava/net/HttpURLConnection`, `Ljava/net/URL;`, `Ljavax/net/`,
