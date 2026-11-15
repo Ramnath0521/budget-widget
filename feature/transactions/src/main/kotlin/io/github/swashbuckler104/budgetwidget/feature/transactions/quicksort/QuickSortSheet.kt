@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.swashbuckler104.budgetwidget.core.designsystem.component.BudgetBottomSheet
 import io.github.swashbuckler104.budgetwidget.core.designsystem.component.CategoryChip
 import io.github.swashbuckler104.budgetwidget.core.designsystem.component.CategoryPicker
 import io.github.swashbuckler104.budgetwidget.core.designsystem.theme.BudgetTheme
@@ -70,8 +71,9 @@ fun QuickSortRoute(
     var ready by rememberSaveable { mutableStateOf(false) }
     if (!ready && !state.loading && (state.transaction == null || state.suggestionsReady)) ready = true
     if (!ready) return
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(onDismissRequest = onClose, sheetState = sheetState, modifier = modifier) {
+    // The shared sheet keeps the category list's scroll inside it (ADR-0041): before, a small
+    // scroll that hit the top moved the sheet itself, which then settled or closed.
+    BudgetBottomSheet(onDismissRequest = onClose, modifier = modifier) {
         QuickSortContent(
             state = state,
             onChoose = viewModel::choose,
@@ -112,11 +114,10 @@ internal fun QuickSortContent(
 
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
+        // No scroll or insets here: the sheet scrolls this and applies the insets.
         modifier = modifier
             .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
-            .navigationBarsPadding()
             .padding(bottom = 16.dp),
     ) {
         Text(
@@ -219,7 +220,6 @@ private fun AllSorted(onClose: () -> Unit, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = modifier
             .fillMaxWidth()
-            .navigationBarsPadding()
             .padding(24.dp),
     ) {
         Text(stringResource(R.string.quicksort_all_sorted), style = MaterialTheme.typography.headlineSmall)

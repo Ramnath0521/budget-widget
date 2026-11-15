@@ -21,6 +21,7 @@ import io.github.swashbuckler104.budgetwidget.core.model.Transaction
 import io.github.swashbuckler104.budgetwidget.core.model.TransactionDetail
 import io.github.swashbuckler104.budgetwidget.core.model.TransactionSource
 import io.github.swashbuckler104.budgetwidget.core.model.TransactionStatus
+import io.github.swashbuckler104.budgetwidget.feature.transactions.setSheetContent
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -52,7 +53,7 @@ class EditTransactionContentTest {
     private val saved = mutableListOf<TransactionEdit>()
     private var reported = false
 
-    private fun show(detail: TransactionDetail) = compose.setContent {
+    private fun show(detail: TransactionDetail) = compose.setSheetContent {
         EditTransactionContent(
             detail,
             categories,
@@ -104,7 +105,9 @@ class EditTransactionContentTest {
     @Test
     fun `adding needs an amount and a category`() {
         val added = mutableListOf<ManualTransaction>()
-        compose.setContent { AddTransactionContent(groups, categories, nowMillis = 1_000, onAdd = { added += it }) }
+        compose.setSheetContent {
+            AddTransactionContent(groups, categories, nowMillis = 1_000, onAdd = { added += it })
+        }
         compose.onNodeWithText("Add").performScrollTo().performClick()
         assertThat(added).isEmpty()
         compose.onNodeWithText("Enter an amount above ₹0 with at most 2 decimals").assertExists()

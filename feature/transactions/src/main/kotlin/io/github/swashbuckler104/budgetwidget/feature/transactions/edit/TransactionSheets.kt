@@ -46,6 +46,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import io.github.swashbuckler104.budgetwidget.core.data.edit.ManualTransaction
 import io.github.swashbuckler104.budgetwidget.core.data.edit.TransactionEdit
+import io.github.swashbuckler104.budgetwidget.core.designsystem.component.BudgetBottomSheet
 import io.github.swashbuckler104.budgetwidget.core.designsystem.component.MoneyText
 import io.github.swashbuckler104.budgetwidget.core.model.Category
 import io.github.swashbuckler104.budgetwidget.core.model.CategoryGroup
@@ -82,10 +83,7 @@ internal fun EditTransactionSheet(
 ) {
     // Outside the sheet's window, so typed input survives leaving the tab and process death.
     val form = rememberSheetForm(detail.transaction.id)
-    ModalBottomSheet(
-        onDismissRequest = actions.onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-    ) {
+    BudgetBottomSheet(onDismissRequest = actions.onDismiss) {
         EditTransactionContent(detail, categories, groups, actions, form)
     }
 }
@@ -122,12 +120,10 @@ internal fun EditTransactionContent(
 
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp),
+        // The sheet scrolls this and applies the navigation bar and keyboard insets (ADR-0041).
         modifier = Modifier
-            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp)
-            .padding(bottom = 16.dp)
-            .imePadding()
-            .navigationBarsPadding(),
+            .padding(bottom = 16.dp),
     ) {
         Text(
             stringResource(R.string.edit_title),
@@ -298,10 +294,7 @@ internal fun AddTransactionSheet(
 ) {
     // Outside the sheet's window, so typed input survives leaving the tab and process death.
     val form = rememberSheetForm(ADD_FORM)
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-    ) {
+    BudgetBottomSheet(onDismissRequest = onDismiss) {
         AddTransactionContent(groups, categories, nowMillis, onAdd, form)
     }
 }
@@ -329,12 +322,10 @@ internal fun AddTransactionContent(
 
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp),
+        // The sheet scrolls this and applies the navigation bar and keyboard insets (ADR-0041).
         modifier = Modifier
-            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp)
-            .padding(bottom = 16.dp)
-            .imePadding()
-            .navigationBarsPadding(),
+            .padding(bottom = 16.dp),
     ) {
         Text(
             stringResource(R.string.add_title),
