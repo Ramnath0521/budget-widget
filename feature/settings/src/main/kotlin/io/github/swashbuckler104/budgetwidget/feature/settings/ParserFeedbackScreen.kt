@@ -11,15 +11,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,13 +38,17 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -95,11 +102,12 @@ class ParserFeedbackViewModel @Inject constructor(
     /** true: the file was saved; false: it could not be written. */
     val saved: Flow<Boolean> = savedChannel.receiveAsFlow()
 
-    fun scan() {
+    /** [keepAmounts]: share real transaction amounts; everything else stays masked (ADR-0046). */
+    fun scan(keepAmounts: Boolean = false) {
         if (mutableState.value == FeedbackState.Scanning) return
         mutableState.value = FeedbackState.Scanning
         viewModelScope.launch {
-            val found = scanner.scan(ParserFeedbackScanner.DAYS, clock.nowMillis())
+            val found = scanner.scan(ParserFeedbackScanner.DAYS, clock.nowMillis(), keepAmounts)
             mutableState.value = found?.let { FeedbackState.Ready(it) } ?: FeedbackState.NoPermission
         }
     }
@@ -157,7 +165,7 @@ fun ParserFeedbackRoute(
         state = state,
         snackbar = snackbar,
         onBack = onBack,
-        onScan = viewModel::scan,
+        onScan = { viewModel.scan(it) },
         onRemove = viewModel::remove,
         onEmail = {
             // The user's own mail app sends it: the app has no internet permission (ADR-0043).
@@ -185,7 +193,7 @@ internal fun ParserFeedbackScreen(
     state: FeedbackState,
     snackbar: SnackbarHostState,
     onBack: () -> Unit,
-    onScan: () -> Unit,
+    onScan: (keepAmounts: Boolean) -> Unit,
     onRemove: (Int) -> Unit,
     onEmail: () -> Unit,
     onSave: () -> Unit,
@@ -236,14 +244,29 @@ internal fun ParserFeedbackScreen(
 }
 
 @Composable
-private fun FeedbackHeader(state: FeedbackState, count: Int, onScan: () -> Unit) {
+private fun FeedbackHeader(state: FeedbackState, count: Int, onScan: (keepAmounts: Boolean) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(vertical = 8.dp)) {
         val body = MaterialTheme.typography.bodyMedium
         val muted = MaterialTheme.colorScheme.onSurfaceVariant
         when (state) {
             FeedbackState.Intro -> {
                 Text(stringResource(R.string.feedback_intro), style = body)
-                Button(onClick = onScan) { Text(stringResource(R.string.feedback_scan)) }
+                var keepAmounts by rememberSaveable { mutableStateOf(false) }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .toggleable(value = keepAmounts, role = Role.Checkbox) { keepAmounts = it },
+                ) {
+                    Checkbox(checked = keepAmounts, onCheckedChange = null)
+                    Column {
+                        Text(stringResource(R.string.feedback_keep_amounts), style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.feedback_keep_amounts_summary), style = body, color = muted)
+                    }
+                }
+                Button(onClick = { onScan(keepAmounts) }) { Text(stringResource(R.string.feedback_scan)) }
             }
 
             FeedbackState.Scanning -> Row(

@@ -16,12 +16,19 @@ dev:   review, commit, release
 
 On the phone: *Settings → Help improve the parser → Scan last 90 days*. The scan runs in memory and
 changes no budget data (ADR-0043). It keeps only messages that read like bank transactions but
-were not parsed, masks account, card, UPI, reference and phone numbers, and shows exactly what
-will be sent. Remove anything you don't want to share, and check for names: they are not masked.
-Then *Email* (your own mail app sends it) or *Save file*.
+were not parsed, masks them (ADR-0046: digits become 9 except the last 2 of account and card
+numbers, words outside the built-in vocabulary become x of the same length, links and UPI IDs
+become `<URL>` and `<UPI>`), and shows exactly what will be sent. *Keep real amounts* leaves
+transaction amounts readable. Remove anything you don't want to share, then *Email* (your own mail
+app sends it) or *Save file*.
 
-Single messages can also be copied from *Settings → Unparsed bank SMS*. Paste them into a file in
-the same format (see `ParserFeedbackReport` in `core/data/.../feedback/ParserFeedback.kt`).
+Masked text keeps its shape, so templates still read: `Rs.9,999.99 debited from A/c XX9912 to
+XXXXXX on 99-Nov-99`. Expected values in golden stubs come from the masked text (amount 9999.99,
+last4 `9912`, merchant `XXXXXX`); that is fine, the template is what the parser learns.
+
+Single messages can also be copied from *Settings → Unparsed bank SMS*. Those are masked less
+(numbers only, so you can recognise them), so mask names and amounts by hand, then paste them into
+a file in the same format (see `ParserFeedbackReport` in `core/data/.../feedback/ParserFeedback.kt`).
 
 Never commit an unmasked message. Never paste real SMS into a public issue.
 
@@ -34,7 +41,8 @@ python3 -I scripts/feedback-to-golden.py report.txt             # append stubs
 
 Each message becomes a case with `type: TODO` in `ingest/src/test/resources/golden/<bank>.txt`
 (banks we don't ship go to `golden/unsupported.txt`, which the tests don't load). A message that
-still has a run of 6+ digits or an `@` is refused: mask it by hand first. `GoldenSmsTest` fails
+still has an `@`, or a run of 6+ digits that isn't all 9s apart from its last 2, is refused: mask
+it by hand first. `GoldenSmsTest` fails
 until every TODO is filled in, which is the point.
 
 ## 3. Let an agent write the rules

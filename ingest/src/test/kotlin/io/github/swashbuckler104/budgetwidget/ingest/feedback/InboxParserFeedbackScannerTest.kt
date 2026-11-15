@@ -54,13 +54,34 @@ class InboxParserFeedbackScannerTest {
         val sbi = found[0]
         assertThat(sbi.count).isEqualTo(2)
         assertThat(sbi.reason).isEqualTo(UnparsedReason.NO_MATCH)
-        assertThat(sbi.body).contains("XXXXXXX03")
-        assertThat(sbi.body).contains("Rs 8,450.00")
+        assertThat(sbi.body)
+            .isEqualTo("Dear Customer, Your A/C XXXXX9903 has a debit by transfer of Rs 9,999.99 on 99/99/99. -SBI")
         val jupiter = found[1]
         assertThat(jupiter.reason).isEqualTo(UnparsedReason.UNKNOWN_SENDER)
-        assertThat(jupiter.body).doesNotContain("chaayos")
-        assertThat(jupiter.body).doesNotContain("630812345678")
+        assertThat(jupiter.body)
+            .isEqualTo("Rs.999.99 debited from your Jupiter account XX9910 via UPI to <UPI>. Ref 999999999999.")
         assertThat(jupiter.month).matches("""\d{4}-\d{2}""")
+    }
+
+    @Test
+    fun `keep real amounts keeps only the amounts`() = runTest {
+        val found = InboxParserFeedbackScanner(FakeInbox(true, inbox), PennyWiseSmsParser())
+            .scan(90, now, keepAmounts = true)!!
+        assertThat(found.map { it.body }).containsExactly(
+            "Dear Customer, Your A/C XXXXX9903 has a debit by transfer of Rs 8,450.00 on 99/99/99. -SBI",
+            "Rs.275.00 debited from your Jupiter account XX9910 via UPI to <UPI>. Ref 999999999999.",
+        ).inOrder()
+    }
+
+    @Test
+    fun `a bank alert with a secret in it is never shared`() = runTest {
+        val alert =
+            sms(
+                "ATMSBI",
+                "Your A/C XXXXX5503 has a debit by transfer of Rs 9.00 on 05/11/26. Never share your PIN. -SBI",
+            )
+        val found = InboxParserFeedbackScanner(FakeInbox(true, listOf(alert)), PennyWiseSmsParser()).scan(90, now)!!
+        assertThat(found).isEmpty()
     }
 
     @Test

@@ -50,7 +50,9 @@
     <string name="settings_feedback">Help improve the parser</string>
     <string name="settings_feedback_summary">Scan the last 90 days for bank SMS that weren\'t read and send them to the developer. Your budget isn\'t changed.</string>
     <string name="feedback_title">Help improve the parser</string>
-    <string name="feedback_intro">This looks through the last 90 days of SMS for bank messages the app couldn\'t read, so support for them can be added.\n\n• It runs only now, on this phone, and changes nothing: no transactions, streaks, widgets or notifications.\n• Personal messages, OTPs, offers and reminders are skipped.\n• Account, card, UPI, reference and phone numbers are masked before you see them.\n• You see exactly what will be sent, can remove any message, and your own mail app sends it. The app itself has no internet access.</string>
+    <string name="feedback_intro">This looks through the last 90 days of SMS for bank messages the app couldn\'t read, so support for them can be added.\n\n• It runs only now, on this phone, and changes nothing: no transactions, streaks, widgets or notifications.\n• Personal messages, OTPs, offers and reminders are skipped.\n• Before you see them, every number becomes 9 (account and card numbers keep their last 2 digits) and every word the app doesn\'t know, so names and shops, becomes x. Links and UPI IDs are removed.\n• You see exactly what will be sent, can remove any message, and your own mail app sends it. The app itself has no internet access.</string>
+    <string name="feedback_keep_amounts">Keep real amounts</string>
+    <string name="feedback_keep_amounts_summary">Helps check that amounts are read right. Balances and all other numbers stay masked.</string>
     <string name="feedback_scan">Scan last 90 days</string>
     <string name="feedback_scanning">Reading SMS on this phone…</string>
     <string name="feedback_no_permission">SMS access is off, so there is nothing to scan. Turn it on in App info to use this.</string>
@@ -59,7 +61,7 @@
         <item quantity="one">%1$d message will be sent</item>
         <item quantity="other">%1$d messages will be sent</item>
     </plurals>
-    <string name="feedback_preview_hint">This is exactly what will be shared. Remove anything you don\'t want to send, and check for names: they aren\'t masked.</string>
+    <string name="feedback_preview_hint">This is exactly what will be shared. Remove anything you don\'t want to send.</string>
     <string name="feedback_remove">Remove message from %1$s</string>
     <string name="feedback_email">Email</string>
     <string name="feedback_save">Save file</string>

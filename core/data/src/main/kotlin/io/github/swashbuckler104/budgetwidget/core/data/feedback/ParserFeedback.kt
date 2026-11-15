@@ -21,8 +21,12 @@ data class FeedbackMessage(
  * change budget data.
  */
 interface ParserFeedbackScanner {
-    /** Null when SMS can't be read (permission missing). At most [MAX_MESSAGES] distinct messages. */
-    suspend fun scan(days: Int, nowMillis: Long): List<FeedbackMessage>?
+    /**
+     * Null when SMS can't be read (permission missing). At most [MAX_MESSAGES] distinct messages,
+     * masked for sharing (ADR-0046). [keepAmounts]: transaction amounts stay real; balances,
+     * limits and every other number are still masked.
+     */
+    suspend fun scan(days: Int, nowMillis: Long, keepAmounts: Boolean = false): List<FeedbackMessage>?
 
     companion object {
         const val DAYS = 90
@@ -38,7 +42,10 @@ object ParserFeedbackReport {
         buildString {
             appendLine(FORMAT)
             appendLine("app: $appVersion, parser-core: $parserCommit, messages: ${messages.size}")
-            appendLine("Account, card, UPI, reference and phone numbers are masked on the phone.")
+            appendLine(
+                "Masked on the phone: digits are 9 (account and card numbers keep their last 2), " +
+                    "words the app doesn't know are x, links and UPI IDs are placeholders.",
+            )
             messages.forEachIndexed { i, m ->
                 appendLine()
                 appendLine("--- ${i + 1} | ${m.sender} | ${m.reason} | ${m.month} | x${m.count}")

@@ -30,8 +30,12 @@ Personal SMS and one-time passwords are never stored.
 *Settings → Help improve the parser* is off until you use it, and runs only when you tap
 *Scan*. It reads the last 90 days of SMS on the phone, in memory, and keeps only bank
 transaction messages the app couldn't read. Personal messages, one-time passwords, offers and
-reminders are skipped. Account, card, UPI, reference and phone numbers are masked; names are not,
-so check the preview. Nothing is stored and your budget is not changed. You see exactly what would
+reminders are skipped, and so is any message mentioning a one-time password, PIN, CVV or
+password. Before you see them, the messages are masked: every digit becomes 9 (account and card
+numbers keep their last 2 digits), links and UPI IDs are removed, and every word that isn't on a
+built-in list of banking words, bank names and dates becomes x, so names and shops never leave the
+phone. Amounts are masked too unless you tick *Keep real amounts*; balances stay masked either way.
+Nothing is stored and your budget is not changed. You see exactly what would
 be shared and can remove any message. If you tap *Email*, your own mail app opens with the
 messages addressed to the developer, and you decide whether to send it. The app itself still has
 no internet access and never sends anything.

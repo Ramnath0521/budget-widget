@@ -332,7 +332,7 @@ written to budget data, nothing is sent automatically.
 
 Simpler than the "separate table" option and leaves nothing behind to clean up.
 
-### [ ] C2. Redactor (allowlist, shape-preserving)
+### [x] C2. Redactor (allowlist, shape-preserving) (1.0.3, ADR-0046)
 
 `SmsRedactor` in `:ingest` (pure Kotlin, tests first). A blocklist of patterns will miss names;
 use an **allowlist**:
