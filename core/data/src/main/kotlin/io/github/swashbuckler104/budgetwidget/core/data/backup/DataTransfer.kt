@@ -133,8 +133,9 @@ class DataTransfer @Inject constructor(
         // Parents before children, and duplicate links after every transaction exists.
         dao.insertCategories(file.categories.sortedBy { it.parentId != null }.map { it.toEntity() })
         dao.insertAccounts(file.accounts.map { it.toEntity() })
-        dao.insertTransactions(file.transactions.map { it.toEntity().copy(duplicateOfId = null) })
+        dao.insertTransactions(file.transactions.map { it.toEntity().copy(duplicateOfId = null, linkedToId = null) })
         file.transactions.forEach { t -> t.duplicateOfId?.let { dao.setDuplicateOf(t.id, it) } }
+        file.transactions.forEach { t -> t.linkedToId?.let { dao.setLinkedTo(t.id, it) } }
         dao.insertRules(file.merchantRules.map { it.toEntity() })
         dao.insertAliases(file.merchantAliases.map { it.toEntity() })
         dao.insertDayCloses(file.dayCloses.map { it.toEntity() })

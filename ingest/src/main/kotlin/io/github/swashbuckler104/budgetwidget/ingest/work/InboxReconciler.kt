@@ -28,6 +28,7 @@ internal class InboxReconciler @Inject constructor(
     }
 
     suspend fun reconcile(): Result {
+        pipeline.scrubUnparsed()
         val now = clock.nowMillis()
         val after = checkpoint.get()?.let { it - OVERLAP.inWholeMilliseconds }
             ?: (now - FIRST_RUN_LOOKBACK.inWholeMilliseconds)

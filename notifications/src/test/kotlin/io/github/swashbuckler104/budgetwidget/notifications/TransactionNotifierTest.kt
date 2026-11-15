@@ -186,7 +186,7 @@ class TransactionNotifierTest {
         assertThat(active.tag).isEqualTo("txn:$id")
         val n = active.notification
         assertThat(n.channelId).isEqualTo(NotificationChannels.TRANSACTIONS)
-        assertThat(n.title()).isEqualTo("-₹450 · Swiggy")
+        assertThat(n.title()).isEqualTo("\u2212₹450 · Swiggy")
         assertThat(n.text()).startsWith("HDFC Bank ••1234 · ")
         assertThat(n.actions.map { it.title.toString() }).containsExactly("🍔 Food", "🍔 Fuel", "🍔 Rent").inOrder()
         assertThat(n.visibility).isEqualTo(Notification.VISIBILITY_PRIVATE)

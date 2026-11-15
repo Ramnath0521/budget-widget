@@ -24,4 +24,24 @@ data class ParsedSms(
     val sender: String,
     val body: String,
     val occurredAt: Long,
+    /** Money moved between the user's own money pots, not spent or earned (ADR-0042). */
+    val flow: FlowHint? = null,
 )
+
+/**
+ * What a transaction really is when it is not spending or income (ADR-0042). Each one is sorted
+ * into a transfer-kind seed category, which every total already leaves out.
+ */
+enum class FlowHint {
+    /** Between two of the user's own accounts (both legs are linked). */
+    OWN_TRANSFER,
+
+    /** A loan EMI paid from a bank account. */
+    LOAN_REPAYMENT,
+
+    /** A credit card bill paid from a bank account; the card spends were already counted. */
+    CARD_BILL_PAYMENT,
+
+    /** A loan paid out into a bank account. */
+    LOAN_DISBURSAL,
+}

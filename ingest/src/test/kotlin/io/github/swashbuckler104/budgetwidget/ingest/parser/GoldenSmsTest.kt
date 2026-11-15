@@ -34,6 +34,8 @@ class GoldenSmsTest(@Suppress("unused") private val name: String, private val ca
         when (type) {
             "UNPARSED" -> check("result").that(result).isInstanceOf(SmsParseResult.Unparsed::class.java)
 
+            "IGNORED" -> check("result").that(result).isEqualTo(SmsParseResult.Ignored)
+
             "BALANCE" -> {
                 check("result").that(result).isInstanceOf(SmsParseResult.BalanceUpdate::class.java)
                 result as SmsParseResult.BalanceUpdate
@@ -57,6 +59,7 @@ class GoldenSmsTest(@Suppress("unused") private val name: String, private val ca
                 case.fields["last4"]?.let { check("last4").that(parsed.accountLast4).isEqualTo(it.orNull()) }
                 case.fields["card"]?.let { check("card").that(parsed.isCard).isEqualTo(it.toBooleanStrict()) }
                 case.fields["balance"]?.let { check("balance").that(parsed.balanceAfterPaise).isEqualTo(paise(it)) }
+                case.fields["flow"]?.let { check("flow").that(parsed.flow?.name ?: "-").isEqualTo(it) }
                 check("body kept verbatim").that(parsed.body).isEqualTo(sms.body)
                 check("occurredAt").that(parsed.occurredAt).isEqualTo(RECEIVED_AT)
             }
@@ -75,7 +78,10 @@ class GoldenSmsTest(@Suppress("unused") private val name: String, private val ca
         fun cases(): List<Array<Any>> {
             val all = GoldenCorpus.BANK_FILES.flatMap { bank ->
                 val cases = GoldenCorpus.load(bank)
-                val transactions = cases.count { it.fields["type"] !in setOf("UNPARSED", "NOT_BANK", "BALANCE") }
+                val transactions = cases.count {
+                    it.fields["type"] !in
+                        setOf("UNPARSED", "IGNORED", "NOT_BANK", "BALANCE")
+                }
                 check(transactions >= 2) { "golden/$bank.txt needs at least 2 transaction cases, has $transactions" }
                 cases
             }

@@ -47,7 +47,7 @@ fun BudgetWidgetTheme(
     MaterialTheme(colorScheme = colorScheme, typography = BudgetTypography, shapes = BudgetShapes, content = content)
 }
 
-/** Income green and spending red, readable on every surface role of either theme. */
+/** Income green and money-out red, readable on every surface role of either theme (ADR-0040). */
 @Immutable
 data class MoneyColors(
     val income: Color,

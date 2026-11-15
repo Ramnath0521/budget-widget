@@ -36,7 +36,7 @@ import io.github.swashbuckler104.budgetwidget.core.model.CategoryPalette
         UnparsedSmsEntity::class,
         MerchantAliasEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
     autoMigrations = [
         // 1 -> 2: category.seedKey (nullable) with a unique index.
@@ -47,6 +47,8 @@ import io.github.swashbuckler104.budgetwidget.core.model.CategoryPalette
         AutoMigration(from = 3, to = 4),
         // 4 -> 5: no schema change; category colors move to the bright palette (ADR-0032).
         AutoMigration(from = 4, to = 5, spec = BudgetDatabase.BrightColorsSpec::class),
+        // 5 -> 6: transactions.linkedToId (nullable): the other leg of an own-account transfer.
+        AutoMigration(from = 5, to = 6),
     ],
 )
 abstract class BudgetDatabase : RoomDatabase() {

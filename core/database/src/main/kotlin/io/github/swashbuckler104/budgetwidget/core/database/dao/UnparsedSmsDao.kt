@@ -36,6 +36,12 @@ interface UnparsedSmsDao {
     @Query("SELECT * FROM unparsed_sms ORDER BY receivedAt DESC, id DESC")
     fun observeAll(): Flow<List<UnparsedSmsEntity>>
 
+    @Query("SELECT * FROM unparsed_sms")
+    suspend fun getAll(): List<UnparsedSmsEntity>
+
+    @Query("UPDATE unparsed_sms SET body = :body WHERE id = :id")
+    suspend fun updateBody(id: Long, body: String)
+
     @Query("SELECT receivedAt FROM unparsed_sms WHERE id = :id")
     suspend fun receivedAt(id: Long): Long?
 

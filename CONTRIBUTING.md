@@ -14,7 +14,9 @@ v1 scope is fixed.
 ./gradlew spotlessApply                                 # format
 ./gradlew spotlessCheck lint test assembleRelease       # everything CI runs (plus the scripts below)
 scripts/check-permissions.sh app/build/outputs/apk/release/app-release-unsigned.apk
+scripts/check-release-apk.sh app/build/outputs/apk/release/app-release-unsigned.apk   # not debuggable, no network code
 scripts/check-module-boundaries.sh
+scripts/check-no-logging.sh                             # no Log/println outside the reviewed allowlist
 ```
 
 ## Ground rules
@@ -22,7 +24,7 @@ scripts/check-module-boundaries.sh
 - **No network.** No `INTERNET` permission, and no analytics, crash reporting, ads, Firebase or network libraries. CI fails on any permission not listed in `config/permissions-allowlist.txt`.
 - **Money is `Long` paise.** Never `Double`/`Float`.
 - **Only `:ingest` touches the parser** (`com.pennywiseai.*`). Everything else uses our own `SmsParser` / `ParsedSms` types.
-- **Never edit `third_party/`.** Parser fixes go to the upstream project; see [docs/PARSER_UPGRADE.md](docs/PARSER_UPGRADE.md).
+- **Never edit `third_party/`.** Parser fixes go in our own rule layer in `:ingest` and, when they belong upstream, to the PennyWise project; see [docs/PARSER_IMPROVEMENT.md](docs/PARSER_IMPROVEMENT.md) and [docs/PARSER_UPGRADE.md](docs/PARSER_UPGRADE.md).
 - **Store only financial SMS.**
 - Warnings are errors: Kotlin, lint and ktlint.
 

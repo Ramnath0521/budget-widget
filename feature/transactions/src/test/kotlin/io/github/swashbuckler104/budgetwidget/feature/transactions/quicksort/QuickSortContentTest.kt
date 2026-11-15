@@ -16,6 +16,7 @@ import io.github.swashbuckler104.budgetwidget.core.model.Direction
 import io.github.swashbuckler104.budgetwidget.core.model.Transaction
 import io.github.swashbuckler104.budgetwidget.core.model.TransactionSource
 import io.github.swashbuckler104.budgetwidget.core.model.TransactionStatus
+import io.github.swashbuckler104.budgetwidget.feature.transactions.setSheetContent
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -37,7 +38,7 @@ class QuickSortContentTest {
     fun `shows the transaction and sorts with one tap on a suggestion`() {
         var chosen: Triple<Category, String, Boolean>? = null
         var ignored = false
-        compose.setContent {
+        compose.setSheetContent {
             QuickSortContent(
                 state = QuickSortUiState(
                     loading = false,
@@ -51,7 +52,7 @@ class QuickSortContentTest {
                 onClose = {},
             )
         }
-        compose.onNodeWithText("-₹450").assertExists()
+        compose.onNodeWithText("\u2212₹450").assertExists()
         compose.onNodeWithText("BLINKIT").assertExists()
         compose.onNodeWithText("3 to sort").assertExists()
         compose.onNodeWithText("Groceries").performClick()
@@ -63,7 +64,7 @@ class QuickSortContentTest {
     @Test
     fun `the whole remember row is one switch with a state`() {
         var chosen: Triple<Category, String, Boolean>? = null
-        compose.setContent {
+        compose.setSheetContent {
             QuickSortContent(
                 state = QuickSortUiState(
                     loading = false,
@@ -86,7 +87,7 @@ class QuickSortContentTest {
 
     @Test
     fun `an empty inbox shows the done state`() {
-        compose.setContent {
+        compose.setSheetContent {
             QuickSortContent(QuickSortUiState(loading = false, finished = true), { _, _, _ -> }, {}, {}, {})
         }
         compose.onNodeWithText("All sorted ✓").assertExists()

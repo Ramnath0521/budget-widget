@@ -155,7 +155,8 @@ class DataTransferTest {
         )
         val result = target.transfer.restore(bytes.inputStream())
 
-        assertThat(result).isEqualTo(RestoreResult.Restored(transactions = 2, categories = 58))
+        // 58 seeded in v1.0.1 plus the Transfers group (5) added in v1.0.2 (ADR-0042).
+        assertThat(result).isEqualTo(RestoreResult.Restored(transactions = 2, categories = 63))
         val sourceDao = source.db.backupDao()
         val targetDao = target.db.backupDao()
         assertThat(targetDao.transactions()).isEqualTo(sourceDao.transactions())
@@ -204,8 +205,11 @@ class DataTransferTest {
 
         assertThat(target.transfer.restore(old.byteInputStream())).isInstanceOf(RestoreResult.Restored::class.java)
 
-        val colors = target.db.backupDao().categories().associate { it.name to it.colorArgb }
+        val restored = target.db.backupDao().categories()
+        val colors = restored.filter { it.seedKey == null }.associate { it.name to it.colorArgb }
         assertThat(colors).containsExactly("Housing", 0xFFFFF176.toInt(), "Mine", 0xFF112233.toInt())
+        // A backup from an older seed set gets the seed groups added since (here: Transfers).
+        assertThat(restored.filter { it.seedKey != null }.map { it.name }).contains("Transfers")
     }
 
     @Test

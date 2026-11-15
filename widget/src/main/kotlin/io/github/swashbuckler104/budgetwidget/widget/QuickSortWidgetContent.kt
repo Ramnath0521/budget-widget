@@ -46,6 +46,7 @@ import io.github.swashbuckler104.budgetwidget.core.model.Category
 import io.github.swashbuckler104.budgetwidget.core.model.Direction
 import io.github.swashbuckler104.budgetwidget.core.model.Transaction
 import io.github.swashbuckler104.budgetwidget.core.model.formatInr
+import io.github.swashbuckler104.budgetwidget.core.model.formatSignedInr
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -206,7 +207,7 @@ private fun Card(snapshot: WidgetSnapshot, focus: Transaction, intents: WidgetIn
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Label(
-                (if (incoming) "+" else "-") + formatInr(focus.amountPaise),
+                formatSignedInr(focus.amountPaise, focus.direction),
                 size = 18.sp,
                 bold = true,
                 color = if (incoming) WidgetMoney.income else WidgetMoney.spend,
@@ -358,10 +359,10 @@ private fun time(context: Context, epochMillis: Long, now: Long): String =
 private fun localDate(epochMillis: Long): LocalDate =
     Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()).toLocalDate()
 
-private fun oneLine(res: Resources, t: Transaction): String {
-    val sign = if (t.direction == Direction.IN) "+" else "-"
-    return "$sign${formatInr(t.amountPaise)} · ${t.merchantDisplay ?: res.getString(R.string.widget_unknown_merchant)}"
-}
+private fun oneLine(res: Resources, t: Transaction): String = "${formatSignedInr(
+    t.amountPaise,
+    t.direction,
+)} · ${t.merchantDisplay ?: res.getString(R.string.widget_unknown_merchant)}"
 
 /** "Restaurant, Fast-food" -> "Restaurant": chips have room for one word or so. */
 internal fun shortLabel(name: String): String = name.substringBefore(',').trim().ifEmpty { name }

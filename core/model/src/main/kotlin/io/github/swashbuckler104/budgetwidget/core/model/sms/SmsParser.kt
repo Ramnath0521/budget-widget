@@ -21,6 +21,12 @@ interface SmsParser {
     fun looksLikeUnknownBankAlert(sms: RawSms): Boolean = false
 
     fun parse(sms: RawSms): SmsParseResult
+
+    /**
+     * What the unparsed list may keep of [body]: account, card, UPI, phone and reference numbers
+     * masked, amounts kept so a parser bug can still be reported (PRIVACY.md).
+     */
+    fun redactUnparsed(body: String): String = body
 }
 
 sealed interface SmsParseResult {
@@ -31,6 +37,12 @@ sealed interface SmsParseResult {
 
     /** A known bank sender whose message did not become a transaction (kept for bug reports). */
     data class Unparsed(val reason: UnparsedReason) : SmsParseResult
+
+    /**
+     * A known bank sender's message that is not a transaction: an OTP, a promotion, a reminder or
+     * a failed payment. Nothing is stored, not even in the unparsed list (hard constraint 4).
+     */
+    data object Ignored : SmsParseResult
 }
 
 enum class UnparsedReason {

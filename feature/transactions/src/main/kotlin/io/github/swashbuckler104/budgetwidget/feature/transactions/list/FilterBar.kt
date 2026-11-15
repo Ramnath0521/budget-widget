@@ -44,6 +44,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import io.github.swashbuckler104.budgetwidget.core.data.list.StatusFilter
 import io.github.swashbuckler104.budgetwidget.core.data.list.TransactionFilter
+import io.github.swashbuckler104.budgetwidget.core.designsystem.component.BudgetBottomSheet
 import io.github.swashbuckler104.budgetwidget.core.designsystem.component.CategoryAvatar
 import io.github.swashbuckler104.budgetwidget.core.designsystem.component.CategoryChip
 import io.github.swashbuckler104.budgetwidget.core.designsystem.component.CategoryPicker
@@ -243,17 +244,12 @@ private fun CategoryFilterSheet(
     onPick: (Long?) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-    ) {
+    BudgetBottomSheet(onDismissRequest = onDismiss) {
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
-                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 16.dp)
-                .navigationBarsPadding(),
+                .padding(bottom = 16.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -308,17 +304,12 @@ internal fun PickCategorySheet(
     onPick: (Category) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-    ) {
+    BudgetBottomSheet(onDismissRequest = onDismiss) {
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
-                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 16.dp)
-                .navigationBarsPadding(),
+                .padding(bottom = 16.dp),
         ) {
             Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
             CategoryPicker(

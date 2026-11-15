@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import io.github.swashbuckler104.budgetwidget.core.designsystem.component.BudgetBottomSheet
 import io.github.swashbuckler104.budgetwidget.core.designsystem.component.CategoryPicker
 import io.github.swashbuckler104.budgetwidget.core.model.Category
 import io.github.swashbuckler104.budgetwidget.core.model.CategoryGroup
@@ -48,17 +49,12 @@ internal fun MerchantRulesSheet(
     modifier: Modifier = Modifier,
 ) {
     var moving by remember { mutableStateOf<MerchantRule?>(null) }
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        modifier = modifier,
-    ) {
+    BudgetBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
-                .navigationBarsPadding()
                 .padding(bottom = 16.dp),
         ) {
             Text(

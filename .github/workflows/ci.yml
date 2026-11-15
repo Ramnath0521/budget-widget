@@ -48,6 +48,12 @@ jobs:
           app/build/outputs/apk/debug/app-debug.apk
           app/build/outputs/apk/release/app-release-unsigned.apk
 
+      - name: Check release APK (not debuggable, no network code)
+        run: scripts/check-release-apk.sh app/build/outputs/apk/release/app-release-unsigned.apk
+
+      - name: Check no logging in app code
+        run: scripts/check-no-logging.sh
+
       - name: Check parser module boundary
         run: scripts/check-module-boundaries.sh
 

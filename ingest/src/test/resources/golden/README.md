@@ -21,10 +21,11 @@ Cases are separated by a line containing only `---`. Lines starting with `#` are
 | `name` | Short description (shown on failure) |
 | `sender` | SMS sender ID, e.g. `AD-HDFCBK` |
 | `body` | Message text; write a newline as `\n` |
-| `type` | `EXPENSE`, `INCOME`, `CREDIT`, `TRANSFER`, `INVESTMENT`, `BALANCE`, `UNPARSED` or `NOT_BANK` |
+| `type` | `EXPENSE`, `INCOME`, `CREDIT`, `TRANSFER`, `INVESTMENT`, `BALANCE`, `UNPARSED` (kept in the unparsed list), `IGNORED` (an OTP, offer, reminder or failed payment from a bank: nothing stored) or `NOT_BANK` |
 | `amount` | Rupees, e.g. `150.00` (compared as paise) |
 | `direction` | `OUT` or `IN` |
 | `merchant`, `last4` | Exact value, or `-` for none. Omit to not check |
 | `card` | `true` or `false`. Omit to not check |
 | `balance` | Rupees after the transaction, or the balance of a `BALANCE` alert. Omit to not check |
+| `flow` | `LOAN_REPAYMENT`, `CARD_BILL_PAYMENT`, `LOAN_DISBURSAL`, or `-` for none (ADR-0042). Omit to not check |
 | `merchant-upstream-bug` | A known wrong merchant from the upstream parser. The test expects this value instead of `merchant`, so it fails when upstream fixes the bug and the line can be removed. Link the draft in `docs/upstream/` in a comment |

@@ -10,6 +10,7 @@ import io.github.swashbuckler104.budgetwidget.core.data.inbox.QuickSortLauncher
 import io.github.swashbuckler104.budgetwidget.core.model.Direction
 import io.github.swashbuckler104.budgetwidget.core.model.Transaction
 import io.github.swashbuckler104.budgetwidget.core.model.formatInr
+import io.github.swashbuckler104.budgetwidget.core.model.formatSignedInr
 import java.util.Date
 import javax.inject.Inject
 
@@ -87,10 +88,10 @@ internal class TransactionNotificationFactory @Inject constructor(
             .build()
     }
 
-    private fun title(transaction: Transaction): String {
-        val sign = if (transaction.direction == Direction.IN) "+" else "-"
-        return listOfNotNull(sign + formatInr(transaction.amountPaise), transaction.merchantDisplay).joinToString(" · ")
-    }
+    private fun title(transaction: Transaction): String = listOfNotNull(
+        formatSignedInr(transaction.amountPaise, transaction.direction),
+        transaction.merchantDisplay,
+    ).joinToString(" · ")
 
     private fun account(transaction: Transaction): String? =
         listOfNotNull(transaction.bankName, transaction.accountLast4?.let { "••$it" })

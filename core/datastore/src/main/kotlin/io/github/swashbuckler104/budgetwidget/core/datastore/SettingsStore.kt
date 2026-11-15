@@ -119,6 +119,16 @@ class SettingsStore @Inject constructor(@SettingsPreferences private val dataSto
         dataStore.edit { it[DYNAMIC_COLOR] = enabled }
     }
 
+    /**
+     * "Hide amounts in screenshots & recents" (`FLAG_SECURE`, audit F1). On by default; kept on this
+     * phone only, not in backups.
+     */
+    val secureScreen: Flow<Boolean> = dataStore.data.map { it[SECURE_SCREEN] ?: true }
+
+    suspend fun setSecureScreen(enabled: Boolean) {
+        dataStore.edit { it[SECURE_SCREEN] = enabled }
+    }
+
     /** Null until decided: then the app checks whether this is an upgrade with data already in it. */
     val onboardingDone: Flow<Boolean?> = dataStore.data.map { it[ONBOARDING_DONE] }
 
@@ -172,6 +182,7 @@ class SettingsStore @Inject constructor(@SettingsPreferences private val dataSto
         val ARMED_NUDGE_AT = longPreferencesKey("armed_nudge_at")
         val THEME = stringPreferencesKey("theme")
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
+        val SECURE_SCREEN = booleanPreferencesKey("secure_screen")
         val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
     }
 }

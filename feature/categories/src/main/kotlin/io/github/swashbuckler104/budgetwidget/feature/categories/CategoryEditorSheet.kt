@@ -30,6 +30,7 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,6 +46,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import io.github.swashbuckler104.budgetwidget.core.data.category.CategoryRepository
 import io.github.swashbuckler104.budgetwidget.core.data.category.CategoryResult
+import io.github.swashbuckler104.budgetwidget.core.designsystem.component.BudgetBottomSheet
 import io.github.swashbuckler104.budgetwidget.core.designsystem.component.CategoryAvatar
 import io.github.swashbuckler104.budgetwidget.core.designsystem.theme.BudgetTheme
 import io.github.swashbuckler104.budgetwidget.core.model.CategoryKind
@@ -58,28 +60,24 @@ internal fun CategoryEditorSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    ModalBottomSheet(
+    // Unsaved = anything changed since the sheet opened (the error message doesn't count).
+    val opened = remember(state.editingId, state.parent?.id) { state.copy(error = null) }
+    BudgetBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        hasUnsavedChanges = state.copy(error = null) != opened,
         modifier = modifier,
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
-                .imePadding()
-                .navigationBarsPadding()
-                .padding(bottom = 16.dp),
-        ) {
+        header = {
             val title = when {
                 state.editingId != null -> R.string.categories_editor_edit
                 state.parent != null -> R.string.categories_editor_new_sub
                 else -> R.string.categories_editor_new
             }
-            // Save lives in the header: the icon grid below is long.
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Pinned above the scrolling form, so Save is always in reach (the icon grid is long).
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
+            ) {
                 CategoryAvatar(state.emoji.ifBlank { "?" }, state.colorArgb, size = 48.dp)
                 Column(modifier = Modifier.weight(1f)) {
                     Text(stringResource(title), style = MaterialTheme.typography.titleLarge)
@@ -92,6 +90,15 @@ internal fun CategoryEditorSheet(
                 }
                 Button(onClick = onSave) { Text(stringResource(R.string.categories_save)) }
             }
+        },
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp),
+        ) {
             OutlinedTextField(
                 value = state.name,
                 onValueChange = { name -> onChange { it.copy(name = name.take(CategoryRepository.MAX_NAME)) } },

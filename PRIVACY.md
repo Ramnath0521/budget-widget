@@ -20,10 +20,21 @@ copied to Google Drive either.
 ## What the app stores (on your phone only)
 
 - Transactions parsed from bank SMS: amount, direction, merchant, account's last 4 digits, time, and the original SMS text (so you can check it).
-- Bank SMS the parser couldn't understand, so you can report a parser bug. This list holds at most 200 messages and you can delete it at any time (*Settings → Unparsed bank SMS*).
+- Bank SMS the parser couldn't understand, so you can report a parser bug. Before a message is kept, account and card numbers (all but the last 2 digits), UPI IDs, links, and reference and phone numbers are masked. One-time passwords, offers, reminders and declined or bounced payments are never kept, even from your bank. This list holds at most 200 messages and you can delete it at any time (*Settings → Unparsed bank SMS*).
 - Your categories, merchant rules, notes and settings.
 
-Personal SMS is never stored.
+Personal SMS and one-time passwords are never stored.
+
+## Help improve the parser (optional)
+
+*Settings → Help improve the parser* is off until you use it, and runs only when you tap
+*Scan*. It reads the last 90 days of SMS on the phone, in memory, and keeps only bank
+transaction messages the app couldn't read. Personal messages, one-time passwords, offers and
+reminders are skipped. Account, card, UPI, reference and phone numbers are masked; names are not,
+so check the preview. Nothing is stored and your budget is not changed. You see exactly what would
+be shared and can remove any message. If you tap *Email*, your own mail app opens with the
+messages addressed to the developer, and you decide whether to send it. The app itself still has
+no internet access and never sends anything.
 
 ## Backups and export
 

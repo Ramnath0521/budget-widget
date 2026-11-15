@@ -87,6 +87,7 @@ fun SettingsRoute(
     onOpenSmsIssues: () -> Unit,
     onOpenAbout: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenParserFeedback: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -142,9 +143,11 @@ fun SettingsRoute(
             setNudgeTime = viewModel::setNudgeTime,
             setTheme = viewModel::setTheme,
             setDynamicColor = viewModel::setDynamicColor,
+            setSecureScreen = viewModel::setSecureScreen,
             importOlder = viewModel::importOlder,
             openAccounts = onOpenAccounts,
             openSmsIssues = onOpenSmsIssues,
+            openParserFeedback = onOpenParserFeedback,
             openAbout = onOpenAbout,
             exportCsv = { export.launch(fileName("transactions", "csv")) },
             backup = { backup.launch(fileName("backup", "json")) },
@@ -173,9 +176,11 @@ internal class SettingsActions(
     val allowNotifications: () -> Unit,
     val setTheme: (ThemeMode) -> Unit = {},
     val setDynamicColor: (Boolean) -> Unit = {},
+    val setSecureScreen: (Boolean) -> Unit = {},
     val importOlder: (days: Int) -> Unit = {},
     val openAccounts: () -> Unit = {},
     val openSmsIssues: () -> Unit = {},
+    val openParserFeedback: () -> Unit = {},
     val openAbout: () -> Unit = {},
     val exportCsv: () -> Unit = {},
     val backup: () -> Unit = {},
@@ -267,6 +272,8 @@ internal fun SettingsScreen(
                 checked = state.autoSort,
                 onCheckedChange = actions.setAutoSort,
             )
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            PrivacySection(state.secureScreen, actions)
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             AppearanceSection(state.appearance, actions)
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -414,6 +421,19 @@ private const val PAISE_PER_RUPEE = 100L
 private const val MINUTES_PER_HOUR = 60
 
 @Composable
+private fun PrivacySection(secureScreen: Boolean, actions: SettingsActions) {
+    Column {
+        SectionHeader(stringResource(R.string.settings_section_privacy))
+        SwitchRow(
+            title = stringResource(R.string.settings_secure_screen),
+            summary = stringResource(R.string.settings_secure_screen_summary),
+            checked = secureScreen,
+            onCheckedChange = actions.setSecureScreen,
+        )
+    }
+}
+
+@Composable
 private fun AppearanceSection(appearance: AppearanceSettings, actions: SettingsActions) {
     Column {
         SectionHeader(stringResource(R.string.settings_section_appearance))
@@ -462,6 +482,11 @@ private fun SmsSection(unparsedCount: Int, actions: SettingsActions) {
             onClick = actions.openSmsIssues,
         )
         LinkRow(
+            title = stringResource(R.string.settings_feedback),
+            summary = stringResource(R.string.settings_feedback_summary),
+            onClick = actions.openParserFeedback,
+        )
+        LinkRow(
             title = stringResource(R.string.settings_accounts),
             summary = stringResource(R.string.settings_accounts_summary),
             onClick = actions.openAccounts,
@@ -487,16 +512,18 @@ private fun DataSection(busy: Boolean, actions: SettingsActions) {
         SectionHeader(stringResource(R.string.settings_section_data))
         var confirmRestore by rememberSaveable { mutableStateOf(false) }
         var confirmFresh by rememberSaveable { mutableStateOf(false) }
+        // Export files are plaintext (audit F2): say so, and where, before the file picker opens.
+        var confirmExport by rememberSaveable { mutableStateOf<ExportKind?>(null) }
         LinkRow(
             title = stringResource(R.string.settings_export_csv),
             summary = stringResource(R.string.settings_export_csv_summary),
-            onClick = actions.exportCsv,
+            onClick = { confirmExport = ExportKind.CSV },
             enabled = !busy,
         )
         LinkRow(
             title = stringResource(R.string.settings_backup),
             summary = stringResource(R.string.settings_backup_summary),
-            onClick = actions.backup,
+            onClick = { confirmExport = ExportKind.BACKUP },
             enabled = !busy,
         )
         LinkRow(
@@ -524,6 +551,26 @@ private fun DataSection(busy: Boolean, actions: SettingsActions) {
                 onDismiss = { confirmRestore = false },
             )
         }
+        confirmExport?.let { kind ->
+            ConfirmDialog(
+                title = stringResource(
+                    if (kind ==
+                        ExportKind.CSV
+                    ) {
+                        R.string.settings_export_confirm_title_csv
+                    } else {
+                        R.string.settings_export_confirm_title_backup
+                    },
+                ),
+                body = stringResource(R.string.settings_export_confirm_body),
+                confirm = stringResource(R.string.settings_export_confirm),
+                onConfirm = {
+                    confirmExport = null
+                    if (kind == ExportKind.CSV) actions.exportCsv() else actions.backup()
+                },
+                onDismiss = { confirmExport = null },
+            )
+        }
         if (confirmFresh) {
             ConfirmDialog(
                 title = stringResource(R.string.settings_start_fresh_confirm_title),
@@ -539,6 +586,8 @@ private fun DataSection(busy: Boolean, actions: SettingsActions) {
         }
     }
 }
+
+private enum class ExportKind { CSV, BACKUP }
 
 /** A row that opens something: a screen, a dialog or a file picker. */
 @Composable

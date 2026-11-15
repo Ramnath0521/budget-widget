@@ -29,6 +29,7 @@ class QuickSortActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        followSecureScreenSetting(settings)
         setContent {
             val appearance by settings.appearance.collectAsStateWithLifecycle(initialValue = null)
             val loaded = appearance ?: return@setContent

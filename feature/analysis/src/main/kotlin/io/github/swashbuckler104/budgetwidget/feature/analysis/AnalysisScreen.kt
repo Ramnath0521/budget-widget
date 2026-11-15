@@ -514,10 +514,11 @@ private fun Summary(analysis: PeriodAnalysis, current: Boolean) {
                     Text(
                         text,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        // Spending more is red, spending less green (ADR-0040).
+                        color = if (more) money.onSpendContainer else money.onIncomeContainer,
                         modifier = Modifier
                             .clip(MaterialTheme.shapes.small)
-                            .background((if (more) money.spendContainer else money.incomeContainer))
+                            .background(if (more) money.spendContainer else money.incomeContainer)
                             .padding(horizontal = 8.dp, vertical = 2.dp),
                     )
                 }

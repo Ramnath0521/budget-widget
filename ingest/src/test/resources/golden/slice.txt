@@ -50,9 +50,18 @@ type: UNPARSED
 name: OTP is not a transaction
 sender: AD-SLCEIT-S
 body: Your OTP for slice transaction is 482910. Do not share.
-type: UNPARSED
+type: IGNORED
 ---
 name: Declined transaction is not stored
 sender: AD-SLCEIT-S
 body: Your slice credit card transaction of RS. 2499.50 on amazon.in was declined.
-type: UNPARSED
+type: IGNORED
+---
+# Transfers and confirmations (v1.0.2, ADR-0042). From docs/handoff/probe-sms.tsv.
+name: slice EMI autopay is a loan repayment
+sender: AD-SLCEIT-S
+body: Your slice EMI of Rs.1,150 for November has been paid successfully via autopay. Thank you - slice
+type: TRANSFER
+amount: 1150
+direction: OUT
+flow: LOAN_REPAYMENT

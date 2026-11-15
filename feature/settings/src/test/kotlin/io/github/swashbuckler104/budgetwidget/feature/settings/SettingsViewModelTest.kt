@@ -26,6 +26,7 @@ import io.github.swashbuckler104.budgetwidget.core.model.sms.SmsParseResult
 import io.github.swashbuckler104.budgetwidget.core.model.sms.SmsParser
 import io.github.swashbuckler104.budgetwidget.core.model.sms.UnparsedReason
 import java.io.File
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -114,7 +115,7 @@ class SettingsViewModelTest {
     @Test
     fun `changes are stored and reflected in the state`() = runTest {
         val (viewModel, store) = viewModel()
-        viewModel.state.test {
+        viewModel.state.test(timeout = IO_TIMEOUT) {
             assertThat(awaitItem().loaded).isFalse()
             assertThat(awaitItem()).isEqualTo(SettingsUiState(loaded = true))
             viewModel.setNotificationsEnabled(false)
@@ -141,7 +142,7 @@ class SettingsViewModelTest {
     fun `backup to a file and restore from it report back, and junk files change nothing`() = runTest {
         val (viewModel, _) = viewModel()
         val file = File(tmp.root, "backup.json")
-        viewModel.messages.test {
+        viewModel.messages.test(timeout = IO_TIMEOUT) {
             viewModel.backup(Uri.fromFile(file), "1.0.0")
             assertThat(awaitItem()).isEqualTo(SettingsMessage.BackedUp)
             assertThat(file.readText()).contains("\"format\":\"budget-widget-backup\"")
@@ -163,5 +164,14 @@ class SettingsViewModelTest {
             assertThat(awaitItem()).isEqualTo(SettingsMessage.ImportStarted(30))
         }
         assertThat(backfills).containsExactly(now - 30L * 24 * 60 * 60 * 1000)
+    }
+
+    private companion object {
+        /**
+         * Turbine waits in wall-clock time, and these flows read real files (DataStore) and a real
+         * Room database on background threads. Under the full parallel test run the default 3 s
+         * was sometimes too short; 20 s only matters when something is really stuck.
+         */
+        val IO_TIMEOUT = 20.seconds
     }
 }
