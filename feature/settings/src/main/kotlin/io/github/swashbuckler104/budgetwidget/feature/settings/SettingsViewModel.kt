@@ -39,6 +39,7 @@ data class SettingsUiState(
     val nudge: NudgeSettings = NudgeSettings(),
     val autoSort: Boolean = false,
     val appearance: AppearanceSettings = AppearanceSettings(),
+    val secureScreen: Boolean = true,
     val unparsedCount: Int = 0,
     /** A backup, restore, export or reset is running: its buttons are disabled. */
     val busy: Boolean = false,
@@ -82,13 +83,15 @@ class SettingsViewModel @Inject constructor(
         settings.appearance,
         transactions.observeUnparsedCount(),
         busy,
-    ) { (notifications, nudge, auto), appearance, unparsed, working ->
+        settings.secureScreen,
+    ) { (notifications, nudge, auto), appearance, unparsed, working, secure ->
         SettingsUiState(
             loaded = true,
             notifications = notifications,
             nudge = nudge,
             autoSort = auto,
             appearance = appearance,
+            secureScreen = secure,
             unparsedCount = unparsed,
             busy = working,
         )
@@ -110,6 +113,8 @@ class SettingsViewModel @Inject constructor(
     fun setNudgeTime(hour: Int, minute: Int) = launch { settings.setNudgeMinute(hour * MINUTES_PER_HOUR + minute) }
 
     fun setTheme(theme: ThemeMode) = launch { settings.setTheme(theme) }
+
+    fun setSecureScreen(enabled: Boolean) = launch { settings.setSecureScreen(enabled) }
 
     fun setDynamicColor(enabled: Boolean) = launch { settings.setDynamicColor(enabled) }
 

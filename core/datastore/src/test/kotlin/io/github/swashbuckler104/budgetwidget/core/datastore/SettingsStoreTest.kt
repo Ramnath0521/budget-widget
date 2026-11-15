@@ -29,6 +29,19 @@ class SettingsStoreTest {
     }
 
     @Test
+    fun `screenshots and recents are hidden by default and can be allowed`() = runTest {
+        val store =
+            SettingsStore(
+                PreferenceDataStoreFactory.create(scope = backgroundScope) {
+                    tmp.root.resolve("settings.preferences_pb")
+                },
+            )
+        assertThat(store.secureScreen.first()).isTrue()
+        store.setSecureScreen(false)
+        assertThat(store.secureScreen.first()).isFalse()
+    }
+
+    @Test
     fun `notifications are on for every amount by default`() = runTest {
         val store =
             SettingsStore(

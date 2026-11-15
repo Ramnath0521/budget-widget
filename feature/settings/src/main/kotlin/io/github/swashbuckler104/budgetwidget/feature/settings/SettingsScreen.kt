@@ -142,6 +142,7 @@ fun SettingsRoute(
             setNudgeTime = viewModel::setNudgeTime,
             setTheme = viewModel::setTheme,
             setDynamicColor = viewModel::setDynamicColor,
+            setSecureScreen = viewModel::setSecureScreen,
             importOlder = viewModel::importOlder,
             openAccounts = onOpenAccounts,
             openSmsIssues = onOpenSmsIssues,
@@ -173,6 +174,7 @@ internal class SettingsActions(
     val allowNotifications: () -> Unit,
     val setTheme: (ThemeMode) -> Unit = {},
     val setDynamicColor: (Boolean) -> Unit = {},
+    val setSecureScreen: (Boolean) -> Unit = {},
     val importOlder: (days: Int) -> Unit = {},
     val openAccounts: () -> Unit = {},
     val openSmsIssues: () -> Unit = {},
@@ -267,6 +269,8 @@ internal fun SettingsScreen(
                 checked = state.autoSort,
                 onCheckedChange = actions.setAutoSort,
             )
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            PrivacySection(state.secureScreen, actions)
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             AppearanceSection(state.appearance, actions)
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -412,6 +416,19 @@ private fun BlockedCard(onAllow: () -> Unit, modifier: Modifier = Modifier) {
 
 private const val PAISE_PER_RUPEE = 100L
 private const val MINUTES_PER_HOUR = 60
+
+@Composable
+private fun PrivacySection(secureScreen: Boolean, actions: SettingsActions) {
+    Column {
+        SectionHeader(stringResource(R.string.settings_section_privacy))
+        SwitchRow(
+            title = stringResource(R.string.settings_secure_screen),
+            summary = stringResource(R.string.settings_secure_screen_summary),
+            checked = secureScreen,
+            onCheckedChange = actions.setSecureScreen,
+        )
+    }
+}
 
 @Composable
 private fun AppearanceSection(appearance: AppearanceSettings, actions: SettingsActions) {

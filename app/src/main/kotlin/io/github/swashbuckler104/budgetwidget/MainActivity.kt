@@ -18,16 +18,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.swashbuckler104.budgetwidget.core.datastore.SettingsStore
 import io.github.swashbuckler104.budgetwidget.core.datastore.ThemeMode
 import io.github.swashbuckler104.budgetwidget.core.designsystem.theme.BudgetWidgetTheme
 import io.github.swashbuckler104.budgetwidget.feature.onboarding.OnboardingRoute
 import io.github.swashbuckler104.budgetwidget.navigation.BudgetWidgetNavHost
 import io.github.swashbuckler104.budgetwidget.navigation.DeepLinkRequest
 import io.github.swashbuckler104.budgetwidget.widget.QuickSortWidgetReceiver
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
+
+    @Inject
+    lateinit var settings: SettingsStore
 
     /** Deep links delivered to the running activity (Insight widget taps). */
     private var deepLink by mutableStateOf<DeepLinkRequest?>(null)
@@ -35,6 +40,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        followSecureScreenSetting(settings)
         setContent {
             val state by viewModel.state.collectAsStateWithLifecycle()
             // Settings load in a few milliseconds; drawing nothing until then avoids a flash of

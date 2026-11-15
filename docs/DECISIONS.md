@@ -310,3 +310,9 @@ deliberate deviation. Newest at the bottom. Status is Accepted unless stated.
 - **Rule:** a known bank's unmatched message is kept only if its body reads like a completed transaction (rupee amount, movement word, account word, no OTP/PIN wording, no "is due", "will be debited", "bounced", "declined", "requested", "pre-approved", "apply now"). Otherwise the parser returns `SmsParseResult.Ignored` and nothing is stored. "Failed" is not in the list because reversals say "credited ... for failed UPI txn".
 - **Masking:** kept bodies go through `UnparsedRedactor` (`:ingest`): links, UPI IDs/emails, all but the last 2 digits of account, card, reference and phone numbers. Amounts, dates and wording stay so the message is still useful for a parser fix. Names are not detected; the screen asks the user to remove them before sharing. `bodyHash` stays the hash of the original body so rescans still dedupe.
 - **Existing data:** `IngestPipeline.scrubUnparsed()` runs at the start of every reconcile, deletes rows that the rule no longer keeps and masks the rest. Idempotent, at most 200 rows. No schema change.
+
+## ADR-0039: Screenshots and recents hidden by default
+- **Why:** amounts showed in the recent-apps thumbnail, screenshots and screen sharing (audit F1). The owner asked for protection on by default.
+- **How:** `MainActivity` and `QuickSortActivity` set `FLAG_SECURE` in `onCreate` before the first frame, then follow `SettingsStore.secureScreen` (Settings > Privacy > "Hide amounts in screenshots & recents", default on). `FLAG_SECURE` also blanks the recents card, so `setRecentsScreenshotEnabled` is not needed.
+- **Trade-off:** with it on, the user's own screenshots of the app are black too; that is why it is a switch. Widgets and notifications are drawn by the launcher and system UI and are not covered.
+- **Not in backups:** a per-phone privacy choice; a restored phone starts with it on.

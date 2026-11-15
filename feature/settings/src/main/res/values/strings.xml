@@ -39,6 +39,9 @@
         <item quantity="one">Last %1$d day</item>
         <item quantity="other">Last %1$d days</item>
     </plurals>
+    <string name="settings_section_privacy">Privacy</string>
+    <string name="settings_secure_screen">Hide amounts in screenshots &amp; recents</string>
+    <string name="settings_secure_screen_summary">Recent apps shows a blank card, and screenshots and screen sharing of the app are blocked</string>
     <string name="settings_unparsed">Unparsed bank SMS</string>
     <plurals name="settings_unparsed_summary">
         <item quantity="one">%1$d message the app couldn\'t read</item>

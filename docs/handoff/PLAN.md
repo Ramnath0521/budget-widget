@@ -534,7 +534,7 @@ IDs in brackets are from SECURITY_AUDIT.md.
 - Device check: inject O1 and O4 from `probe-sms.tsv`; `select count(*) from unparsed_sms` does
   not change.
 
-### [ ] E2. Screen privacy [F1]
+### [x] E2. Screen privacy [F1]
 
 `MainActivity` and `QuickSortActivity`: `setRecentsScreenshotEnabled(false)` on API 33+ by
 default. New setting "Block screenshots" (default off) applies `FLAG_SECURE` to both. Check:
