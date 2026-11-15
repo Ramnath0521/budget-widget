@@ -282,7 +282,7 @@ user's choice). Migration test 5 -> 6. Backup round trip keeps links.
 **Device check.** Fresh emulator install, inject the chain files, read Analysis totals and the
 inbox count; compare with the `expect-*` values.
 
-### [ ] B4. Developer-side improvement loop (replaces the "model")
+### [x] B4. Developer-side improvement loop (replaces the "model")
 
 - `docs/PARSER_IMPROVEMENT.md`: the loop. (1) user exports redacted unparsed messages (section C
   or copy from the unparsed list), (2) `scripts/unparsed-to-golden.py export.jsonl` appends stub
@@ -311,7 +311,7 @@ banks outside the 7.
 
 ## C. "Help improve the parser" (opt-in 90-day scan)
 
-**Moved to 1.0.3** (owner's scope rule: ship only if done cleanly). 1.0.2 already masks and filters the unparsed list (E1), which C builds on.
+**1.0.2 ships C step 1** (owner, 2026-11-15): 90-day in-memory scan, masking with `UnparsedRedactor` (numbers; not the full word allowlist of C2), preview with per-message removal, email to the owner via the mail app (text in the body, so no FileProvider), and Save file. **1.0.3:** the C2 allowlist redactor, attachments if needed, and step 2 of the improvement loop.
 
 **Goal.** From Settings, the user can scan the last 90 days of SMS, see redacted messages that
 look financial but did not parse, remove any, and send them by email or save a file. Nothing is

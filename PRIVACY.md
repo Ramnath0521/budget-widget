@@ -25,6 +25,17 @@ copied to Google Drive either.
 
 Personal SMS and one-time passwords are never stored.
 
+## Help improve the parser (optional)
+
+*Settings → Help improve the parser* is off until you use it, and runs only when you tap
+*Scan*. It reads the last 90 days of SMS on the phone, in memory, and keeps only bank
+transaction messages the app couldn't read. Personal messages, one-time passwords, offers and
+reminders are skipped. Account, card, UPI, reference and phone numbers are masked; names are not,
+so check the preview. Nothing is stored and your budget is not changed. You see exactly what would
+be shared and can remove any message. If you tap *Email*, your own mail app opens with the
+messages addressed to the developer, and you decide whether to send it. The app itself still has
+no internet access and never sends anything.
+
 ## Backups and export
 
 CSV export and JSON backup write a file to a location **you** choose (via Android's file picker).
