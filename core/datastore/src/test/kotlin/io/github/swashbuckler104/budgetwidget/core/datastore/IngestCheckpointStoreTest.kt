@@ -23,6 +23,22 @@ class IngestCheckpointStoreTest {
         assertThat(store.get()).isEqualTo(2_000)
     }
 
+    @Test
+    fun `dismissed hashes keep the newest 500, each once`() = runTest {
+        val store = IngestCheckpointStore(dataStore(this))
+        assertThat(store.dismissedUnparsedHashes()).isEmpty()
+        store.dismissUnparsedHashes(listOf("a", "b"))
+        store.dismissUnparsedHashes(listOf("a"))
+        assertThat(store.dismissedUnparsedHashes()).containsExactly("a", "b")
+
+        store.dismissUnparsedHashes((1..600).map { "h$it" })
+        val kept = store.dismissedUnparsedHashes()
+        assertThat(kept).hasSize(500)
+        assertThat(kept).contains("h600")
+        assertThat(kept).doesNotContain("h100")
+        assertThat(kept).doesNotContain("a")
+    }
+
     private fun dataStore(scope: TestScope) = PreferenceDataStoreFactory.create(scope = scope.backgroundScope) {
         tmp.newFile("ingest.preferences_pb").also { it.delete() }
     }

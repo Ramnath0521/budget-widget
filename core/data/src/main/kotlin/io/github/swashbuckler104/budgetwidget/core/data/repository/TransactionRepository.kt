@@ -63,12 +63,13 @@ class TransactionRepository @Inject constructor(
 
     /** Deletes one entry; a later inbox rescan won't record it again ([UnparsedDismissals]). */
     suspend fun deleteUnparsed(id: Long) {
-        unparsedSmsDao.receivedAt(id)?.let { dismissals.dismissUpTo(it) }
+        unparsedSmsDao.get(id)?.let { dismissals.dismiss(listOf(it.bodyHash)) }
         unparsedSmsDao.delete(id)
     }
 
     suspend fun clearUnparsed() {
-        unparsedSmsDao.newestReceivedAt()?.let { dismissals.dismissUpTo(it) }
+        val rows = unparsedSmsDao.getAll()
+        if (rows.isNotEmpty()) dismissals.dismiss(rows.map { it.bodyHash }, upTo = rows.maxOf { it.receivedAt })
         unparsedSmsDao.deleteAll()
     }
 

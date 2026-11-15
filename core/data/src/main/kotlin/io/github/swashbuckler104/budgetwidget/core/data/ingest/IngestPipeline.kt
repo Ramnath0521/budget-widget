@@ -138,6 +138,7 @@ class IngestPipeline @Inject constructor(
         if (result is SmsParseResult.Ignored) return@withContext IngestOutcome.NotFinancial
         val autoSortEnabled = autoSort.enabled()
         val dismissedUpTo = if (result is SmsParseResult.Unparsed) dismissals.upTo() else null
+        val dismissedHashes = if (result is SmsParseResult.Unparsed) dismissals.hashes() else emptySet()
         val outcome = mutex.withLock {
             if (scanGeneration != null && scanGeneration != generation) return@withLock IngestOutcome.Superseded
             db.withTransaction {
@@ -154,12 +155,14 @@ class IngestPipeline @Inject constructor(
 
                     is SmsParseResult.Unparsed -> {
                         // Deleted from the list by the user: a rescan must not bring it back.
-                        val dismissed = dismissedUpTo?.let { sms.receivedAt <= it } ?: false
+                        val bodyHash = sha256(sms.body)
+                        val dismissed = bodyHash in dismissedHashes ||
+                            dismissedUpTo?.let { sms.receivedAt <= it } ?: false
                         if (!dismissed) {
                             db.unparsedSmsDao().insertCapped(
                                 UnparsedSmsEntity(
                                     sender = sms.sender,
-                                    bodyHash = sha256(sms.body),
+                                    bodyHash = bodyHash,
                                     // Only bank-like alerts reach this point (step 1), with
                                     // account, UPI and reference numbers masked.
                                     body = parser.redactUnparsed(sms.body),

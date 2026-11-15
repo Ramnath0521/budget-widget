@@ -45,12 +45,6 @@ interface UnparsedSmsDao {
     @Query("SELECT * FROM unparsed_sms WHERE id = :id")
     suspend fun get(id: Long): UnparsedSmsEntity?
 
-    @Query("SELECT receivedAt FROM unparsed_sms WHERE id = :id")
-    suspend fun receivedAt(id: Long): Long?
-
-    @Query("SELECT MAX(receivedAt) FROM unparsed_sms")
-    suspend fun newestReceivedAt(): Long?
-
     @Query("DELETE FROM unparsed_sms WHERE id = :id")
     suspend fun delete(id: Long)
 

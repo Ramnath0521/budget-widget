@@ -1,6 +1,7 @@
 package io.github.swashbuckler104.budgetwidget.core.data.ingest
 
 import android.content.Context
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -13,6 +14,7 @@ import io.github.swashbuckler104.budgetwidget.core.database.BudgetDatabase
 import io.github.swashbuckler104.budgetwidget.core.database.entity.CategoryEntity
 import io.github.swashbuckler104.budgetwidget.core.database.entity.MerchantRuleEntity
 import io.github.swashbuckler104.budgetwidget.core.database.entity.UnparsedSmsEntity
+import io.github.swashbuckler104.budgetwidget.core.datastore.IngestCheckpointStore
 import io.github.swashbuckler104.budgetwidget.core.model.CategoryKind
 import io.github.swashbuckler104.budgetwidget.core.model.Direction
 import io.github.swashbuckler104.budgetwidget.core.model.ParserType
@@ -28,11 +30,16 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class IngestPipelineTest {
+    @get:Rule
+    val tmp = TemporaryFolder()
+
     private lateinit var db: BudgetDatabase
     private val parser = FakeParser()
     private var autoSort = false
@@ -70,26 +77,37 @@ class IngestPipelineTest {
         assertThat(db.unparsedSmsDao().count()).isEqualTo(1)
     }
 
+    /**
+     * The receiver stamps an SMS with its sent time (PDU), the inbox scan with its arrival time,
+     * which is usually a little later. A deleted entry must stay deleted either way.
+     */
     @Test
     fun `unparsed messages the user deleted don't come back on a rescan`() = runTest {
-        val dismissals = object : UnparsedDismissals {
-            var mark: Long? = null
-
-            override suspend fun upTo() = mark
-
-            override suspend fun dismissUpTo(epochMillis: Long) {
-                mark = maxOf(mark ?: epochMillis, epochMillis)
-            }
-        }
+        val dismissals = StoredUnparsedDismissals(
+            IngestCheckpointStore(
+                PreferenceDataStoreFactory.create(scope = backgroundScope) { tmp.root.resolve("i.preferences_pb") },
+            ),
+        )
         val withDismissals = IngestPipeline(parser, db, { NOW }, { autoSort }, InboxEvents(emptySet()), dismissals)
         val repository = TransactionRepository(db.transactionDao(), db.unparsedSmsDao(), db.accountDao(), dismissals)
-        val old = RawSms(BANK, "unreadable 1", 1_000)
-        withDismissals.ingest(old, IngestOrigin.REALTIME)
-        repository.clearUnparsed()
 
-        withDismissals.ingest(old, IngestOrigin.RECONCILE) // the scan's overlap reads it again
+        // One deleted: the scan reads it with a later arrival time and must skip it.
+        withDismissals.ingest(RawSms(BANK, "unreadable 1", 1_000), IngestOrigin.REALTIME)
+        repository.deleteUnparsed(db.unparsedSmsDao().getAll().single().id)
+        withDismissals.ingest(RawSms(BANK, "unreadable 1", 2_076), IngestOrigin.RECONCILE)
         assertThat(db.unparsedSmsDao().count()).isEqualTo(0)
-        withDismissals.ingest(RawSms(BANK, "unreadable 2", 2_000), IngestOrigin.REALTIME)
+
+        // Deleting one doesn't hide others, older or newer.
+        withDismissals.ingest(RawSms(BANK, "unreadable 0", 500), IngestOrigin.BACKFILL)
+        withDismissals.ingest(RawSms(BANK, "unreadable 2", 3_000), IngestOrigin.REALTIME)
+        assertThat(db.unparsedSmsDao().count()).isEqualTo(2)
+
+        // All deleted: the same holds for every entry that was in the list.
+        repository.clearUnparsed()
+        withDismissals.ingest(RawSms(BANK, "unreadable 0", 900), IngestOrigin.RECONCILE)
+        withDismissals.ingest(RawSms(BANK, "unreadable 2", 3_800), IngestOrigin.RECONCILE)
+        assertThat(db.unparsedSmsDao().count()).isEqualTo(0)
+        withDismissals.ingest(RawSms(BANK, "unreadable 3", 4_000), IngestOrigin.REALTIME)
         assertThat(db.unparsedSmsDao().count()).isEqualTo(1)
     }
 
