@@ -1,0 +1,6 @@
+- Loan EMIs, card bill payments and moves between your own accounts count once, as transfers, never as spending or income.
+- Money out shows in normal text with a minus sign; income stays green.
+- Sheets no longer close when you scroll back up; Save stays visible.
+- OTPs and offers are never stored; kept bank SMS have account numbers masked.
+- New: hide amounts in screenshots and recent apps (on by default).
+- Export warns that backup files are not encrypted.

@@ -16,6 +16,18 @@ The [installation guide](#installation-guide) walks through the few prompts Andr
 > Analysis tabs, onboarding, backup/restore and CSV export. New here? Jump to the
 > [installation guide](#installation-guide).
 
+### What's new in 1.0.2
+
+- **Transfers count once.** Loan EMIs, credit card bill payments and money moved between your own
+  accounts are recognised, linked and sorted into a new **Transfers** group. They no longer show up
+  as both spending and income.
+- **Calmer amounts.** Money out uses the normal text color with a `−` sign; income stays green.
+- **Sheets stay open** when you scroll back up, Save is always visible, and unsaved edits ask
+  before closing.
+- **More privacy.** OTPs, offers and reminders are never stored, kept bank messages have account,
+  card, UPI and reference numbers masked, and amounts are hidden from screenshots and recent apps
+  (Settings → Privacy, on by default).
+
 ## Features
 
 - **Inbox of new payments.** Every bank SMS becomes a transaction waiting to be sorted. A notification offers your daily categories (Groceries, Restaurant, Public transport) as buttons; the **Quick-Sort widget** shows the next payment with category chips.
@@ -156,8 +168,19 @@ you.
 | Widget shows old data | Open the app once; widgets refresh on every change. If it persists, remove and re-add the widget. |
 | A bank you use isn't recognised | Copy the message from **Unparsed bank SMS**, remove your name and account number, and open a [bank format issue](https://github.com/SwashBuckler104/budget-widget/issues/new/choose). |
 
-**Verifying a download (optional):** every APK on a release has a `.sha256` file next to it.
-Compare it with `sha256sum budget-widget.apk`.
+**Verifying a download (optional):** every release has a `budget-widget.apk.sha256` file next to
+the APK, and the release page lists the checksum.
+
+```sh
+sha256sum budget-widget.apk          # Linux; on macOS: shasum -a 256 budget-widget.apk
+cat budget-widget.apk.sha256         # the two hashes must match
+```
+
+To check it was signed by this project's key (needs the Android SDK build-tools):
+`apksigner verify --print-certs budget-widget.apk` must show the certificate SHA-256
+`e99e72ef41b71705f9cee601160de484346933b4c810ab6b8578e7abc2ccb0e7`. Every release since 1.0.0 uses
+this key, which is why updates install over the old version and keep your data. Each release
+also carries the complete source, including the parser submodule, as a `-source.tar.gz`.
 
 ## Build from source
 
@@ -187,8 +210,17 @@ or privacy problems privately, as described in [SECURITY.md](SECURITY.md).
 
 ## Privacy
 
-See [PRIVACY.md](PRIVACY.md). In short: the app reads SMS on the phone, keeps only financial
-messages, and has no way to send anything anywhere.
+Budget Widget cannot send your data anywhere. The app does not have Android's internet
+permission, so the operating system itself blocks every network connection: no cloud, no
+analytics, no ads, no crash reports. It asks for two things only: reading SMS (to find bank
+transaction messages) and showing notifications. Personal messages and one-time passwords are
+never stored. Everything stays in the app's private storage and is excluded from Google backup.
+The code is open source (AGPL-3.0), every release is checked automatically against a fixed
+permission list and for network code, and you can verify the permissions yourself in
+*Settings → Apps → Budget Widget → Permissions*.
+
+Details: [PRIVACY.md](PRIVACY.md). The independent audit is in
+[docs/handoff/SECURITY_AUDIT.md](docs/handoff/SECURITY_AUDIT.md).
 
 ## Credits
 

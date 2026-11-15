@@ -23,13 +23,26 @@ jobs:
           submodules: recursive
           persist-credentials: false
 
+      # v<versionName> is a release; v<versionName>-rcN is a pre-release build of it (same signing
+      # key, installs over the current version, never shown as "Latest").
       - name: Check tag matches versionName
         run: |
           version="$(sed -n 's/^budgetwidget\.versionName=//p' gradle.properties)"
-          if [[ "${GITHUB_REF_NAME}" != "v${version}" ]]; then
-            echo "Tag ${GITHUB_REF_NAME} does not match versionName ${version} in gradle.properties" >&2
+          if [[ "${GITHUB_REF_NAME}" == "v${version}" ]]; then
+            echo "PRERELEASE_FLAG=" >> "${GITHUB_ENV}"
+          elif [[ "${GITHUB_REF_NAME}" =~ ^v${version//./\\.}-rc[0-9]+$ ]]; then
+            echo "PRERELEASE_FLAG=--prerelease" >> "${GITHUB_ENV}"
+          else
+            echo "Tag ${GITHUB_REF_NAME} does not match versionName ${version} (or ${version}-rcN)" >&2
             exit 1
           fi
+
+      # AGPL-3.0: the complete corresponding source, including the parser-core submodule, which
+      # GitHub's own tag archives leave out. Made before the build, so it holds no build output.
+      - name: Source archive (with submodules)
+        run: |
+          name="budget-widget-${GITHUB_REF_NAME}-source"
+          tar --exclude-vcs --transform "s,^\.,${name}," -czf "${RUNNER_TEMP}/${name}.tar.gz" .
 
       - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
@@ -82,6 +95,7 @@ jobs:
           # One APK under a fixed name, so releases/latest/download/budget-widget.apk always
           # serves the newest version (the README's one-tap download link).
           cp app/build/outputs/apk/release/app-release.apk dist/budget-widget.apk
+          cp "${RUNNER_TEMP}/budget-widget-${GITHUB_REF_NAME}-source.tar.gz" dist/
           (cd dist && sha256sum budget-widget.apk > budget-widget.apk.sha256)
           cat dist/*.sha256
 
@@ -91,9 +105,11 @@ jobs:
         run: >
           gh release create "${GITHUB_REF_NAME}"
           dist/*
-          --title "${GITHUB_REF_NAME}"
+          --title "Budget Widget ${GITHUB_REF_NAME#v}"
+          --notes-file "fastlane/metadata/android/en-US/changelogs/$(sed -n 's/^budgetwidget\.versionCode=//p' gradle.properties).txt"
           --generate-notes
           --verify-tag
+          ${PRERELEASE_FLAG}
 
       - name: Remove keystore
         if: always()
