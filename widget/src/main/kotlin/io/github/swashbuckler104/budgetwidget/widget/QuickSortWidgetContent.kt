@@ -210,7 +210,7 @@ private fun Card(snapshot: WidgetSnapshot, focus: Transaction, intents: WidgetIn
                 formatSignedInr(focus.amountPaise, focus.direction),
                 size = 18.sp,
                 bold = true,
-                color = if (incoming) WidgetMoney.income else null,
+                color = if (incoming) WidgetMoney.income else WidgetMoney.spend,
             )
             Spacer(GlanceModifier.width(8.dp))
             Label(

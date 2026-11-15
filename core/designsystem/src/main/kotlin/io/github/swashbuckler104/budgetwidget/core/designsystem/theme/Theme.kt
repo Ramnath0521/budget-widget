@@ -47,19 +47,32 @@ fun BudgetWidgetTheme(
     MaterialTheme(colorScheme = colorScheme, typography = BudgetTypography, shapes = BudgetShapes, content = content)
 }
 
-/** Income green, readable on every surface role of either theme. Money out uses the normal text color. */
+/** Income green and money-out red, readable on every surface role of either theme (ADR-0040). */
 @Immutable
-data class MoneyColors(val income: Color, val incomeContainer: Color, val onIncomeContainer: Color) {
+data class MoneyColors(
+    val income: Color,
+    val incomeContainer: Color,
+    val onIncomeContainer: Color,
+    val spend: Color,
+    val spendContainer: Color,
+    val onSpendContainer: Color,
+) {
     companion object {
         val light = MoneyColors(
             income = Color(0xFF1B7A3D),
             incomeContainer = Color(0xFFC8F0CF),
             onIncomeContainer = Color(0xFF00210B),
+            spend = Color(0xFFB3261E),
+            spendContainer = Color(0xFFFFDAD5),
+            onSpendContainer = Color(0xFF410001),
         )
         val dark = MoneyColors(
             income = Color(0xFF7FD993),
             incomeContainer = Color(0xFF00531F),
             onIncomeContainer = Color(0xFFC8F0CF),
+            spend = Color(0xFFFFB4AA),
+            spendContainer = Color(0xFF8C1D18),
+            onSpendContainer = Color(0xFFFFDAD5),
         )
     }
 }

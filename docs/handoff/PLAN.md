@@ -70,7 +70,7 @@ categories and a budget in progress.
 
 ## A. UI fixes
 
-### [x] A1. Amount colours: outgoing neutral, income green, real signs
+### [x] A1. Amount colours: outgoing red, income green everywhere, real signs (owner changed from neutral, ADR-0040)
 
 **Goal.** No outgoing amount is red anywhere. Income stays green. Every directional amount shows
 `+` or `−` (U+2212), so meaning never depends on colour.

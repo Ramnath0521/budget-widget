@@ -109,7 +109,7 @@ private fun Header(snapshot: InsightSnapshot) {
                         "$arrow${abs(change)}%",
                         12.sp,
                         bold = true,
-                        color = if (more) null else WidgetMoney.income,
+                        color = if (more) WidgetMoney.spend else WidgetMoney.income,
                         modifier = GlanceModifier.semantics {
                             contentDescription = context.getString(
                                 if (more) R.string.insight_more_than_last else R.string.insight_less_than_last,

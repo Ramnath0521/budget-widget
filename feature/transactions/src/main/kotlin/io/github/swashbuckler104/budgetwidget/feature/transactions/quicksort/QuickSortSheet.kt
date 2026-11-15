@@ -182,7 +182,7 @@ private fun TransactionSummary(transaction: Transaction, overdue: Boolean, modif
             Text(
                 formatSignedInr(transaction.amountPaise, transaction.direction),
                 style = MaterialTheme.typography.headlineMedium,
-                color = if (incoming) BudgetTheme.money.income else MaterialTheme.colorScheme.onSurface,
+                color = if (incoming) BudgetTheme.money.income else BudgetTheme.money.spend,
             )
             if (overdue) {
                 Badge(containerColor = MaterialTheme.colorScheme.errorContainer) {

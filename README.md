@@ -21,7 +21,8 @@ The [installation guide](#installation-guide) walks through the few prompts Andr
 - **Transfers count once.** Loan EMIs, credit card bill payments and money moved between your own
   accounts are recognised, linked and sorted into a new **Transfers** group. They no longer show up
   as both spending and income.
-- **Calmer amounts.** Money out uses the normal text color with a `−` sign; income stays green.
+- **Consistent amounts.** Money out is red with a `−` sign and income green with a `+`, on every
+  screen, widget and notification.
 - **Sheets stay open** when you scroll back up, Save is always visible, and unsaved edits ask
   before closing.
 - **More privacy.** OTPs, offers and reminders are never stored, kept bank messages have account,

@@ -317,10 +317,10 @@ deliberate deviation. Newest at the bottom. Status is Accepted unless stated.
 - **Trade-off:** with it on, the user's own screenshots of the app are black too; that is why it is a switch. Widgets and notifications are drawn by the launcher and system UI and are not covered.
 - **Not in backups:** a per-phone privacy choice; a restored phone starts with it on.
 
-## ADR-0040: Money out is neutral, with a real minus sign
-- **Why:** red on every outgoing amount read as an alarm for normal spending. The owner asked for income green and money out in the normal text color, with the sign carrying the meaning.
-- **How:** `formatSignedInr` (`:core:model`) is the one place a directional sign is built: `+` for in, U+2212 `−` for out (same width as `+` in tabular figures); `formatInr` also uses `−` for negative values. `MoneyColors` no longer has spend colors. "More than last month" in Analysis and the Insight widget is neutral; "less" stays green. Notification accent for money out is blue grey.
-- **Red stays** for errors, Delete and the Overdue badge, which are not amounts.
+## ADR-0040: Money in green, money out red, everywhere, with a real minus sign
+- **Why:** in v1.0.1 money out was red only on inbox cards and the edit sheet, and neutral elsewhere. The owner wants one rule on every screen: outgoing red, incoming green. (The audit brief first asked for neutral; the owner corrected that before release.)
+- **How:** `formatSignedInr` (`:core:model`) is the one place a directional sign is built: `+` for in, U+2212 `−` for out (same width as `+` in tabular figures); `formatInr` also uses `−` for negative values, so color is never the only signal. `MoneyText` colors every directional amount (no per-caller switch); the Quick-Sort sheet, both widgets, Analysis (month comparison chip, Net) and the notification accent follow the same rule.
+- **Red also stays** for errors, Delete and the Overdue badge.
 
 ## ADR-0041: One bottom-sheet scaffold that keeps scrolling inside the sheet
 - **Why:** Material 3 1.4's `ModalBottomSheet` gives its content's leftover scroll to the sheet (`onPostScroll`) and settles the sheet after every fling (`onPostFling`, even at zero velocity). With `skipPartiallyExpanded` the only anchors are Expanded and Hidden, so scrolling a long form back to the top a little too hard closed it and lost the input (reproduced on the emulator and the phone, TEST_REPORT item 3), and small scrolls near the top could move and re-settle the sheet (the likely cause of the Quick-Sort "More" jitter, item 2).

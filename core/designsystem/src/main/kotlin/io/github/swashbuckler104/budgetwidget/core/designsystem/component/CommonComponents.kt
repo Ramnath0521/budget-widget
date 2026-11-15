@@ -33,8 +33,8 @@ import io.github.swashbuckler104.budgetwidget.core.model.formatSignedInr
 
 /**
  * A signed amount: `−₹450` / `+₹1,200`. The sign is always written out, because color is never
- * the only signal (SCOPE.md §6). Income is green; money out uses the normal text color everywhere
- * (owner's choice, v1.0.2), so lists never turn into a wall of red.
+ * the only signal (SCOPE.md §6). Income is green and money out is red, the same on every screen
+ * (owner's choice, v1.0.2).
  */
 @Composable
 fun MoneyText(
@@ -44,10 +44,11 @@ fun MoneyText(
     style: TextStyle = MaterialTheme.typography.titleMedium,
     muted: Boolean = false,
 ) {
-    // Income is green; money out uses the normal text color, its sign carries the meaning.
+    // Income green, money out red, everywhere; the sign carries the meaning too (ADR-0040).
     val color = when {
         muted -> MaterialTheme.colorScheme.onSurfaceVariant
         direction == Direction.IN -> BudgetTheme.money.income
+        direction == Direction.OUT -> BudgetTheme.money.spend
         else -> MaterialTheme.colorScheme.onSurface
     }
     Text(formatSignedInr(paise, direction), modifier = modifier, style = style.tabular(), color = color, maxLines = 1)

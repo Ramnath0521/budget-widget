@@ -39,7 +39,7 @@ internal class TransactionNotificationFactory @Inject constructor(
             .setSmallIcon(R.drawable.ic_stat_transaction)
             .setContentTitle(title(transaction))
             .setContentText(text)
-            .setColor(if (transaction.direction == Direction.IN) COLOR_IN else COLOR_NEUTRAL)
+            .setColor(if (transaction.direction == Direction.IN) COLOR_IN else COLOR_OUT)
             .setWhen(transaction.occurredAt)
             // The text already says when; the header would repeat it as "now".
             .setShowWhen(false)
@@ -119,8 +119,8 @@ internal class TransactionNotificationFactory @Inject constructor(
     companion object {
         const val GROUP = "transactions"
 
-        /** Green 800 for money in; blue grey 600 for money out (neutral, not alarming). */
-        private const val COLOR_NEUTRAL = 0xFF546E7A.toInt()
+        /** Material red 800 / green 800: readable on light and dark notification shades. */
+        private const val COLOR_OUT = 0xFFC62828.toInt()
         private const val COLOR_IN = 0xFF2E7D32.toInt()
         private const val SORT_KEY_DIGITS = 19
     }
