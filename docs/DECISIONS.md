@@ -418,3 +418,8 @@ deliberate deviation. Newest at the bottom. Status is Accepted unless stated.
 - **Storage unchanged:** a category still stores one emoji. No migration, backups stay compatible, and widgets and notifications, which can only show text, keep the emoji. The editor's "type any emoji" field still works.
 - **Editor:** the icon grid shows the glyphs on tiles, the chosen one in the category's color. Color swatches are plain dots with a ring on the chosen one; the radial glow from ADR-0035 is gone, so the picker and the result look alike. The palette itself is unchanged.
 - **Tests:** `CategoryPaletteTest` (tiles opaque, deep or pale, hue kept), `CategoriesUiStateTest` (every editor emoji has an icon).
+
+## ADR-0053: A wider icon set behind "More icons"; Analysis moves to the middle tab
+- **Icons:** `CategoryIcons` now covers 111 emoji, offered in the editor in eight themed groups (`CATEGORY_ICON_GROUPS`: food, transport and travel, shopping, home and bills, health, fun and learning, people and other, money). The owner wanted the wider choice without a long form, so the editor shows 14 everyday icons (plus the chosen one when it isn't among them) and a *More icons* button that opens the groups. All keys are Emoji 5.0 or older, as before (ADR-0052: storage is still the emoji).
+- **Tabs:** the bar order is Transactions, Analysis, Categories (owner's choice); it was Analysis, Transactions, Categories. The start screen is still Transactions.
+- **Tests:** `CategoriesUiStateTest` (every offered emoji has an icon, no duplicates, the short list is part of the full one, at least 100).

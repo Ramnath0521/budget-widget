@@ -29,9 +29,13 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -110,41 +114,7 @@ internal fun CategoryEditorSheet(
                 modifier = Modifier.fillMaxWidth(),
             )
             Text(stringResource(R.string.categories_editor_icon), style = MaterialTheme.typography.titleSmall)
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                val accent = BudgetTheme.categoryColor(state.colorArgb)
-                val tile = RoundedCornerShape(ICON_CELL_CORNER)
-                CATEGORY_EMOJI.forEach { emoji ->
-                    val selected = emoji == state.emoji
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(tile)
-                            .background(
-                                if (selected) {
-                                    BudgetTheme.categoryContainer(state.colorArgb)
-                                } else {
-                                    MaterialTheme.colorScheme.surfaceContainerHigh
-                                },
-                            )
-                            .then(if (selected) Modifier.border(1.5.dp, accent, tile) else Modifier)
-                            .clickable(role = Role.RadioButton) { onChange { it.copy(emoji = emoji) } }
-                            .semantics {
-                                this.selected = selected
-                                contentDescription = emoji
-                            },
-                    ) {
-                        CategoryGlyph(
-                            emoji,
-                            tint = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
-                            size = 24.dp,
-                        )
-                    }
-                }
-            }
+            IconPicker(state.emoji, state.colorArgb, onPick = { emoji -> onChange { it.copy(emoji = emoji) } })
             OutlinedTextField(
                 value = state.emoji,
                 onValueChange = { text -> onChange { it.copy(emoji = firstGrapheme(text)) } },
@@ -200,6 +170,82 @@ internal fun CategoryEditorSheet(
                     stringResource(R.string.categories_editor_inherits),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The everyday icons, with the chosen one first when it isn't among them; "More icons" opens the
+ * full set by theme, so the form stays short until asked.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun IconPicker(selected: String, colorArgb: Int, onPick: (String) -> Unit) {
+    // Not saveable: sheet content is its own window and loses saved state anyway.
+    var expanded by remember { mutableStateOf(false) }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        val short = if (selected.isBlank() ||
+            selected in CATEGORY_EMOJI
+        ) {
+            CATEGORY_EMOJI
+        } else {
+            listOf(selected) + CATEGORY_EMOJI
+        }
+        IconGrid(short, selected, colorArgb, onPick)
+        if (expanded) {
+            CATEGORY_ICON_GROUPS.forEach { group ->
+                Text(
+                    stringResource(group.title),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+                IconGrid(group.emoji, selected, colorArgb, onPick)
+            }
+        }
+        TextButton(onClick = { expanded = !expanded }) {
+            Text(
+                stringResource(
+                    if (expanded) R.string.categories_editor_fewer_icons else R.string.categories_editor_more_icons,
+                ),
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun IconGrid(emoji: List<String>, selected: String, colorArgb: Int, onPick: (String) -> Unit) {
+    val accent = BudgetTheme.categoryColor(colorArgb)
+    val tile = RoundedCornerShape(ICON_CELL_CORNER)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        emoji.forEach { item ->
+            val chosen = item == selected
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(tile)
+                    .background(
+                        if (chosen) {
+                            BudgetTheme.categoryContainer(colorArgb)
+                        } else {
+                            MaterialTheme.colorScheme.surfaceContainerHigh
+                        },
+                    )
+                    .then(if (chosen) Modifier.border(1.5.dp, accent, tile) else Modifier)
+                    .clickable(role = Role.RadioButton) { onPick(item) }
+                    .semantics {
+                        this.selected = chosen
+                        contentDescription = item
+                    },
+            ) {
+                CategoryGlyph(
+                    item,
+                    tint = if (chosen) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+                    size = 24.dp,
                 )
             }
         }

@@ -1,5 +1,6 @@
 package io.github.swashbuckler104.budgetwidget.feature.categories
 
+import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -230,9 +231,59 @@ class CategoriesViewModel @Inject constructor(private val repository: CategoryRe
 /** Colors offered for top-level categories (bright shades, darkened on light surfaces). */
 val CATEGORY_COLORS: List<Int> = CategoryPalette.colors
 
-/** Emoji offered in the editor (Emoji 5.0 or older, so they render on Android 8); any emoji can be typed. */
+/**
+ * The icons the editor shows at once: the everyday ones. The rest are behind "More icons"
+ * ([CATEGORY_ICON_GROUPS]); any emoji can still be typed.
+ */
 val CATEGORY_EMOJI: List<String> = listOf(
-    "🍽️", "🛒", "🍝", "🛵", "☕", "🍺", "🚗", "⛽", "🚕", "🚌", "🅿️", "🛍️", "👕", "💻", "🏠", "📦",
-    "📃", "💡", "📶", "🔑", "🚰", "📺", "🏥", "💊", "💉", "🛡️", "🎓", "📚", "🎬", "🎟️", "🎮", "🎵",
-    "👪", "🎁", "💇", "👶", "🐶", "✈️", "🏨", "🚆", "🏦", "📈", "🔁", "🤝", "💰", "💼", "💸", "📌",
+    "🍽️", "🛒", "☕", "🚗", "⛽", "🚌", "🛍️", "🏠", "💡", "📱", "🏥", "🎬", "👪", "✈️",
+)
+
+/** One themed block of the full icon list. */
+data class CategoryIconGroup(@param:StringRes val title: Int, val emoji: List<String>)
+
+/**
+ * Every icon on offer, by theme (ADR-0053). Each is stored as its emoji, all Emoji 5.0 or older so
+ * they also render as text on Android 8 widgets and notifications.
+ */
+val CATEGORY_ICON_GROUPS: List<CategoryIconGroup> = listOf(
+    CategoryIconGroup(
+        R.string.categories_icons_food,
+        listOf("🍽️", "🛒", "🍝", "🍔", "🍕", "🛵", "☕", "🍺", "🍷", "🍰", "🍦"),
+    ),
+    CategoryIconGroup(
+        R.string.categories_icons_transport,
+        listOf("🚗", "⛽", "🔌", "🅿️", "🚕", "🚌", "🚇", "🚆", "🚲", "🏍️", "⛴️", "✈️", "🏨", "🗺️", "🎒", "🏖️"),
+    ),
+    CategoryIconGroup(
+        R.string.categories_icons_shopping,
+        listOf("🛍️", "👕", "💄", "💎", "⌚", "📦", "🎁", "🛋️", "🌱", "✏️", "🏷️"),
+    ),
+    CategoryIconGroup(
+        R.string.categories_icons_home,
+        listOf(
+            "🏠", "🏡", "🏘️", "🔑", "🛏️", "💡", "🔥", "🚰", "📶", "🌐", "📞", "📱", "💻", "📃", "📋",
+            "🔧", "🔨", "🔩", "🛠️", "🗑️",
+        ),
+    ),
+    CategoryIconGroup(
+        R.string.categories_icons_health,
+        listOf("🏥", "💊", "💉", "❤️", "🏋️", "🧘", "💇", "💆"),
+    ),
+    CategoryIconGroup(
+        R.string.categories_icons_fun,
+        listOf(
+            "📺", "🎬", "🎟️", "🎮", "🎵", "🎧", "🎤", "🎨", "📷", "🎲", "⚽", "🏊", "🎉", "🎓", "📚", "📰", "🤖",
+        ),
+    ),
+    CategoryIconGroup(
+        R.string.categories_icons_people,
+        listOf("👪", "👶", "🐶", "🎂", "🤝", "🙏", "⭐", "📌", "⚠️", "✍️", "➕"),
+    ),
+    CategoryIconGroup(
+        R.string.categories_icons_money,
+        listOf(
+            "🏦", "🏛️", "💰", "💼", "💸", "💵", "💳", "🏧", "💱", "📈", "📉", "📊", "💹", "🔁", "↔️", "🛡️", "📥",
+        ),
+    ),
 )

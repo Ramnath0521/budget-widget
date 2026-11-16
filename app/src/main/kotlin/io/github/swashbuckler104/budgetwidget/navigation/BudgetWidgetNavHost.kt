@@ -79,14 +79,15 @@ data class DrillDownDestination(
     val direction: String = "",
 )
 
+/** In bar order: the list you land on, then Analysis in the middle (owner's choice, 1.0.3). */
 private enum class Tab(val route: Any, val routeClass: KClass<*>, @StringRes val label: Int, val icon: ImageVector) {
-    ANALYSIS(AnalysisDestination, AnalysisDestination::class, R.string.tab_analysis, Icons.Rounded.Insights),
     TRANSACTIONS(
         TransactionsDestination,
         TransactionsDestination::class,
         R.string.tab_transactions,
         Icons.AutoMirrored.Rounded.ReceiptLong,
     ),
+    ANALYSIS(AnalysisDestination, AnalysisDestination::class, R.string.tab_analysis, Icons.Rounded.Insights),
     CATEGORIES(CategoriesDestination, CategoriesDestination::class, R.string.tab_categories, Icons.Rounded.Category),
 }
 

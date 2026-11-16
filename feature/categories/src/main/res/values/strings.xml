@@ -43,6 +43,16 @@
     <string name="categories_editor_in">In %1$s</string>
     <string name="categories_editor_name">Name</string>
     <string name="categories_editor_icon">Icon</string>
+    <string name="categories_editor_more_icons">More icons</string>
+    <string name="categories_editor_fewer_icons">Fewer icons</string>
+    <string name="categories_icons_food">Food &amp; drinks</string>
+    <string name="categories_icons_transport">Transport &amp; travel</string>
+    <string name="categories_icons_shopping">Shopping</string>
+    <string name="categories_icons_home">Home &amp; bills</string>
+    <string name="categories_icons_health">Health &amp; care</string>
+    <string name="categories_icons_fun">Fun &amp; learning</string>
+    <string name="categories_icons_people">People &amp; other</string>
+    <string name="categories_icons_money">Money</string>
     <string name="categories_editor_custom_emoji">Or type any emoji</string>
     <string name="categories_editor_color">Color</string>
     <string name="categories_editor_color_n">Color %1$d</string>

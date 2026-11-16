@@ -46,7 +46,11 @@ class CategoriesUiStateTest {
 
     @Test
     fun `every icon offered in the editor has a drawn icon`() {
-        assertThat(CATEGORY_EMOJI.filter { CategoryIcons.forEmoji(it) == null }).isEmpty()
+        val all = CATEGORY_ICON_GROUPS.flatMap { it.emoji }
+        assertThat(all.filter { CategoryIcons.forEmoji(it) == null }).isEmpty()
+        assertThat(all).containsNoDuplicates()
+        assertThat(all).containsAtLeastElementsIn(CATEGORY_EMOJI)
+        assertThat(all.size).isAtLeast(100)
         assertThat(CategoryIcons.forEmoji("🦄")).isNull()
     }
 }
