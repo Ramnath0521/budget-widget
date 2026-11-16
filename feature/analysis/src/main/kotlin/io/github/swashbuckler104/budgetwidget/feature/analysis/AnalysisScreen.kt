@@ -606,7 +606,7 @@ private fun CategoriesCard(analysis: PeriodAnalysis, accountId: Long?, actions: 
         val description = slices.joinToString(", ") { "${nameOf(it, toSortName)} ${formatInr(it.totalPaise)}" }
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth()) {
             DonutChart(
-                slices = slices.map { DonutSlice(it.totalPaise, colorOf(it, toSortColor)) },
+                slices = slices.map { DonutSlice(it.totalPaise, BudgetTheme.chartColor(colorOf(it, toSortColor))) },
                 selected = pick,
                 onSelect = select,
                 description = stringResource(
@@ -750,7 +750,7 @@ private fun SpendRow(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 ProportionBar(
                     fraction = fraction,
-                    color = color,
+                    color = BudgetTheme.chartColor(color),
                     trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                     modifier = Modifier
                         .weight(1f)

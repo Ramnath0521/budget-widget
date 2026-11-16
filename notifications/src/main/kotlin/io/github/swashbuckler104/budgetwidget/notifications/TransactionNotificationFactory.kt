@@ -56,9 +56,8 @@ internal class TransactionNotificationFactory @Inject constructor(
         hint?.let { builder.setStyle(NotificationCompat.BigTextStyle().bigText("$text\n$it")) }
         actions.forEach { action ->
             val (label, command) = when (action) {
-                is QuickAction.Sort ->
-                    "${action.category.emoji} ${action.category.name}" to
-                        NotificationCommand.Sort(id, action.category.id)
+                // The name alone: buttons are text-only, and the app no longer shows emoji (ADR-0054).
+                is QuickAction.Sort -> action.category.name to NotificationCommand.Sort(id, action.category.id)
 
                 QuickAction.Ignore -> context.getString(R.string.notif_action_ignore) to NotificationCommand.Ignore(id)
 

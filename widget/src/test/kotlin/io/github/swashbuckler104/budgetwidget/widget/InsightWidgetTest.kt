@@ -120,8 +120,8 @@ class InsightWidgetTest {
         provideComposable { InsightWidgetContent(snapshot(), Intent("analysis")) }
 
         onNode(hasText("Top categories this month")).assertExists()
-        onNode(hasText("⛽  Fuel")).assertExists()
-        onNode(hasText("📥  To sort")).assertExists()
-        onNode(hasText("🍽️  Food & Drinks")).assertExists()
+        onNode(hasText("Fuel")).assertExists()
+        onNode(hasText("To sort")).assertExists()
+        onNode(hasText("Food & Drinks")).assertExists()
     }
 }

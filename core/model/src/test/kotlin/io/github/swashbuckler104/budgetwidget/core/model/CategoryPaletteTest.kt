@@ -72,6 +72,23 @@ class CategoryPaletteTest {
     }
 
     @Test
+    fun `chart shades keep the hue and are never lighter`() {
+        // HSL lightness is (max + min) / 2; one step of 8-bit rounding allowed. (A pale color pulled
+        // down to the cap gains depth, so channel spread may grow: lavender becomes a fuller violet.)
+        fun channels(argb: Int) = listOf(argb shr 16 and 0xFF, argb shr 8 and 0xFF, argb and 0xFF)
+        CategoryPalette.colors.forEach { color ->
+            val shade = CategoryPalette.forChart(color)
+            assertThat(shade ushr 24).isEqualTo(0xFF)
+            val (before, after) = channels(color) to channels(shade)
+            assertThat(after.max() + after.min()).isAtMost(before.max() + before.min() + 2)
+            if (chroma(color) >= 0.15f) assertThat(hue(shade)).isWithin(6f).of(hue(color))
+        }
+        // The loud lemon is toned down; a color already inside the caps is left alone.
+        assertThat(CategoryPalette.forChart(0xFFFFF176.toInt())).isNotEqualTo(0xFFFFF176.toInt())
+        assertThat(CategoryPalette.forChart(0xFF8C92AC.toInt())).isEqualTo(0xFF8C92AC.toInt())
+    }
+
+    @Test
     fun `colors already dark enough are untouched`() {
         val navy = 0xFF1A237E.toInt()
         assertThat(CategoryPalette.forLightSurface(navy)).isEqualTo(navy)

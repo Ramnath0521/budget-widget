@@ -86,6 +86,22 @@ object CategoryPalette {
         }
     }
 
+    /**
+     * [argb] for large filled areas on a dark surface (donut slices, bars): the same hue with
+     * saturation and lightness capped, so a neon lemon slice doesn't outshine the rest of the screen.
+     * Small marks (icons) keep the full color.
+     */
+    fun forChart(argb: Int): Int {
+        val (hue, saturation, lightness) = toHsl(argb)
+        if (saturation <= CHART_SATURATION && lightness <= CHART_LIGHTNESS) return argb
+        return hsl(
+            argb ushr 24,
+            hue,
+            saturation.coerceAtMost(CHART_SATURATION),
+            lightness.coerceAtMost(CHART_LIGHTNESS),
+        )
+    }
+
     /** Hue in degrees, then saturation and lightness in 0..1. */
     private fun toHsl(argb: Int): Triple<Float, Float, Float> {
         val r = (argb shr 16 and 0xFF) / 255f
@@ -140,6 +156,8 @@ object CategoryPalette {
     const val MIN_CONTRAST_ON_WHITE = 3.0
     private const val LIGHTNESS_STEP = 0.01f
     private const val OPAQUE = 0xFF
+    private const val CHART_SATURATION = 0.72f
+    private const val CHART_LIGHTNESS = 0.66f
     private const val DARK_TILE_SATURATION = 0.5f
     private const val DARK_TILE_LIGHTNESS = 0.16f
     private const val LIGHT_TILE_SATURATION = 0.8f

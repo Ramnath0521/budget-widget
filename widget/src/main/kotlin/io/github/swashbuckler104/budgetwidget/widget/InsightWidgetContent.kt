@@ -193,13 +193,15 @@ private fun CategoryRow(spend: CategorySpend, monthPaise: Long, width: Dp) {
     val context = LocalContext.current
     val name = spend.category?.name ?: context.getString(R.string.insight_to_sort)
     val emoji = spend.category?.emoji ?: "📥"
+    val color = spend.category?.let { categoryColorProvider(it.colorArgb) } ?: GlanceTheme.colors.outline
     Column(modifier = GlanceModifier.fillMaxWidth().padding(top = 6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = GlanceModifier.fillMaxWidth()) {
-            Label("$emoji  $name", 13.sp, maxLines = 1, modifier = GlanceModifier.defaultWeight())
+            CategoryMark(emoji, color, size = 16.dp, emojiSize = 13.sp)
+            Spacer(GlanceModifier.width(6.dp))
+            Label(name, 13.sp, maxLines = 1, modifier = GlanceModifier.defaultWeight())
             Label(formatInrRounded(spend.totalPaise), 13.sp, bold = true, maxLines = 1)
         }
         val fraction = if (monthPaise > 0) spend.totalPaise.toFloat() / monthPaise else 0f
-        val color = spend.category?.let { categoryColorProvider(it.colorArgb) } ?: GlanceTheme.colors.outline
         Box(
             modifier = GlanceModifier
                 .fillMaxWidth()

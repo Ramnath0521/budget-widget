@@ -1,5 +1,6 @@
 package io.github.swashbuckler104.budgetwidget.feature.categories
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -51,6 +52,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -58,6 +60,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.swashbuckler104.budgetwidget.core.designsystem.component.CategoryAvatar
+import io.github.swashbuckler104.budgetwidget.core.designsystem.component.CategoryGlyph
+import io.github.swashbuckler104.budgetwidget.core.designsystem.theme.BudgetTheme
 import io.github.swashbuckler104.budgetwidget.core.model.Category
 import io.github.swashbuckler104.budgetwidget.core.model.CategoryGroup
 import io.github.swashbuckler104.budgetwidget.core.model.CategoryKind
@@ -255,7 +259,17 @@ private fun CategoryGroupItem(
     modifier: Modifier = Modifier,
 ) {
     val parent = group.category
-    Surface(tonalElevation = if (dragging) 6.dp else 0.dp, modifier = modifier) {
+    // One card per group (ADR-0054); lifted and accent-edged while it is being dragged.
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = if (dragging) {
+            MaterialTheme.colorScheme.surfaceContainerHigh
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerLow
+        },
+        border = if (dragging) BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else BudgetTheme.cardBorder,
+        modifier = modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+    ) {
         Column {
             CategoryRow(
                 category = parent,
@@ -282,6 +296,19 @@ private fun CategoryGroupItem(
                     }
                 },
             )
+            if (!expanded && group.children.isNotEmpty()) {
+                // A glance at what is inside, without opening the group.
+                val tint = BudgetTheme.categoryColor(parent.colorArgb).copy(alpha = PREVIEW_ALPHA)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .alpha(if (parent.archived) 0.5f else 1f)
+                        .padding(start = PREVIEW_INSET, bottom = 12.dp)
+                        .clearAndSetSemantics { },
+                ) {
+                    group.children.take(PREVIEW_ICONS).forEach { CategoryGlyph(it.emoji, tint, 18.dp) }
+                }
+            }
             if (expanded) {
                 group.children.forEach { child ->
                     CategoryRow(
@@ -424,5 +451,10 @@ private fun CategoryRow(
         }
     }
 }
+
+// Lines up with the group's name: row padding, drag handle, icon tile and its padding.
+private val PREVIEW_INSET = 112.dp
+private const val PREVIEW_ICONS = 8
+private const val PREVIEW_ALPHA = 0.8f
 
 private class MenuEntry(val label: Int, val enabled: Boolean = true, val action: () -> Unit)

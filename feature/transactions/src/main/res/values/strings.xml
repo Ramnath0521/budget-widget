@@ -21,6 +21,7 @@
     <string name="transactions_title">Transactions</string>
     <string name="transactions_back">Back</string>
     <string name="transactions_search">Search</string>
+    <string name="transactions_filters">Filters</string>
     <string name="transactions_search_hint">Merchant, note or amount</string>
     <string name="transactions_close_search">Close search</string>
     <string name="transactions_more">More options</string>

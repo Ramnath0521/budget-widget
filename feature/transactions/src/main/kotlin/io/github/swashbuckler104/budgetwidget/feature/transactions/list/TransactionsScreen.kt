@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.DoNotDisturbOn
+import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material.icons.rounded.Inbox
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Search
@@ -31,6 +32,8 @@ import androidx.compose.material.icons.rounded.SearchOff
 import androidx.compose.material.icons.rounded.SelectAll
 import androidx.compose.material.icons.rounded.Sell
 import androidx.compose.material.icons.rounded.Sms
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -265,7 +268,13 @@ internal fun TransactionsScreen(
     modifier: Modifier = Modifier,
 ) {
     var searching by rememberSaveable { mutableStateOf(false) }
+    var filtering by rememberSaveable { mutableStateOf(false) }
     var inboxExpanded by rememberSaveable { mutableStateOf(false) }
+    // The chips stay out of the way until asked for; with a filter on they stay up, so it is
+    // never applied unseen (ADR-0054).
+    val activeFilters = with(state.filter) {
+        listOfNotNull(status, direction, categoryId, accountId, fromMillis).size
+    }
     BackHandler(enabled = state.selecting, onBack = callbacks.onClearSelection)
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -285,6 +294,13 @@ internal fun TransactionsScreen(
                     actions = {
                         IconButton(onClick = { searching = !searching }) {
                             Icon(Icons.Rounded.Search, stringResource(R.string.transactions_search))
+                        }
+                        if (!state.drillDown) {
+                            IconButton(onClick = { filtering = !filtering }) {
+                                BadgedBox(badge = { if (activeFilters > 0) Badge { Text("$activeFilters") } }) {
+                                    Icon(Icons.Rounded.FilterList, stringResource(R.string.transactions_filters))
+                                }
+                            }
                         }
                         if (callbacks.onBack == null) OverflowMenu(smsGranted, callbacks)
                     },
@@ -317,7 +333,7 @@ internal fun TransactionsScreen(
                     searching = false
                 }
             }
-            if (!state.drillDown) {
+            if (!state.drillDown && (filtering || activeFilters > 0)) {
                 FilterBar(
                     filter = state.filter,
                     categories = state.categories,

@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -101,6 +102,11 @@ object BudgetTheme {
     @Composable
     @ReadOnlyComposable
     fun categoryContainer(argb: Int): Color = Color(CategoryPalette.container(argb, isDarkSurface))
+
+    /** [color] (a category color as drawn here) for big filled areas: softened on dark surfaces. */
+    @Composable
+    @ReadOnlyComposable
+    fun chartColor(color: Color): Color = if (isDarkSurface) Color(CategoryPalette.forChart(color.toArgb())) else color
 
     /** The hairline that lifts a card off the background; tonal steps alone look flat on dark. */
     val cardBorder: BorderStroke
