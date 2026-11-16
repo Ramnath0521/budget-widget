@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,6 +57,7 @@ fun CategoryChip(category: Category, onClick: () -> Unit, modifier: Modifier = M
         onClick = onClick,
         label = { Text(category.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         leadingIcon = { Text(category.emoji, modifier = Modifier.clearAndSetSemantics { }) },
+        colors = FilterChipDefaults.filterChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
         modifier = modifier,
     )
 }

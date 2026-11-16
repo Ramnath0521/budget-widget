@@ -30,7 +30,7 @@
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_dynamic_color">Wallpaper colors</string>
-    <string name="settings_dynamic_color_summary">Use colors from your wallpaper instead of the app\'s teal</string>
+    <string name="settings_dynamic_color_summary">Use colors from your wallpaper instead of the app\'s own palette</string>
 
     <string name="settings_section_sms">Bank SMS</string>
     <string name="settings_import_older">Import older SMS</string>

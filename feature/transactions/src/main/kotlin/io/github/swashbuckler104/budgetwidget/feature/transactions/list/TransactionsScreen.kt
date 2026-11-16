@@ -443,7 +443,7 @@ private fun TransactionList(
                 SectionHeader(
                     pluralStringResource(R.plurals.transactions_inbox, state.inbox.size, state.inbox.size),
                     trailing = {
-                        FilledTonalButton(onClick = { callbacks.onOpenQuickSort(null) }) {
+                        Button(onClick = { callbacks.onOpenQuickSort(null) }) {
                             Text(stringResource(R.string.transactions_sort_all))
                         }
                     },

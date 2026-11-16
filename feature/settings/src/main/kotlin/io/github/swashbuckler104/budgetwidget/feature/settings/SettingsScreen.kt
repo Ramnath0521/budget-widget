@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,6 +38,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -66,6 +68,8 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
@@ -76,6 +80,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.swashbuckler104.budgetwidget.core.datastore.AppearanceSettings
 import io.github.swashbuckler104.budgetwidget.core.datastore.SmsRetention
 import io.github.swashbuckler104.budgetwidget.core.datastore.ThemeMode
+import io.github.swashbuckler104.budgetwidget.core.designsystem.theme.BudgetTheme
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -233,38 +238,40 @@ internal fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(vertical = 8.dp),
         ) {
-            SectionHeader(stringResource(R.string.settings_section_notifications))
             val notifications = state.notifications
-            if (notifications.enabled && notificationsBlocked) {
-                BlockedCard(onAllow = actions.allowNotifications)
+            SettingsGroup(stringResource(R.string.settings_section_notifications)) {
+                if (notifications.enabled && notificationsBlocked) {
+                    BlockedCard(onAllow = actions.allowNotifications)
+                }
+                SwitchRow(
+                    title = stringResource(R.string.settings_notifications),
+                    summary = stringResource(R.string.settings_notifications_summary),
+                    checked = notifications.enabled,
+                    onCheckedChange = actions.setNotificationsEnabled,
+                )
+                MinAmountField(
+                    initialPaise = notifications.minAmountPaise,
+                    enabled = notifications.enabled,
+                    onChange = actions.setMinAmount,
+                )
             }
-            SwitchRow(
-                title = stringResource(R.string.settings_notifications),
-                summary = stringResource(R.string.settings_notifications_summary),
-                checked = notifications.enabled,
-                onCheckedChange = actions.setNotificationsEnabled,
-            )
-            MinAmountField(
-                initialPaise = notifications.minAmountPaise,
-                enabled = notifications.enabled,
-                onChange = actions.setMinAmount,
-            )
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            SectionHeader(stringResource(R.string.settings_section_day))
             val nudge = state.nudge
             val time = formatMinuteOfDay(nudge.minuteOfDay)
-            SwitchRow(
-                title = stringResource(R.string.settings_nudge),
-                summary = stringResource(R.string.settings_nudge_summary, time),
-                checked = nudge.enabled,
-                onCheckedChange = actions.setNudgeEnabled,
-            )
             var picking by rememberSaveable { mutableStateOf(false) }
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.settings_nudge_time)) },
-                supportingContent = { Text(time) },
-                modifier = Modifier.clickable(enabled = nudge.enabled, role = Role.Button) { picking = true },
-            )
+            SettingsGroup(stringResource(R.string.settings_section_day)) {
+                SwitchRow(
+                    title = stringResource(R.string.settings_nudge),
+                    summary = stringResource(R.string.settings_nudge_summary, time),
+                    checked = nudge.enabled,
+                    onCheckedChange = actions.setNudgeEnabled,
+                )
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_nudge_time)) },
+                    supportingContent = { Text(time) },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    modifier = Modifier.clickable(enabled = nudge.enabled, role = Role.Button) { picking = true },
+                )
+            }
             if (picking) {
                 NudgeTimeDialog(
                     minuteOfDay = nudge.minuteOfDay,
@@ -275,28 +282,25 @@ internal fun SettingsScreen(
                     onDismiss = { picking = false },
                 )
             }
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            SectionHeader(stringResource(R.string.settings_section_sorting))
-            SwitchRow(
-                title = stringResource(R.string.settings_auto_sort),
-                summary = stringResource(R.string.settings_auto_sort_summary),
-                checked = state.autoSort,
-                onCheckedChange = actions.setAutoSort,
-            )
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            SettingsGroup(stringResource(R.string.settings_section_sorting)) {
+                SwitchRow(
+                    title = stringResource(R.string.settings_auto_sort),
+                    summary = stringResource(R.string.settings_auto_sort_summary),
+                    checked = state.autoSort,
+                    onCheckedChange = actions.setAutoSort,
+                )
+            }
             PrivacySection(state.secureScreen, state.smsRetention, actions)
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             AppearanceSection(state.appearance, actions)
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             SmsSection(state.unparsedCount, actions)
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             DataSection(state.busy, state.restorePrompt, actions)
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            LinkRow(
-                title = stringResource(R.string.settings_about),
-                summary = stringResource(R.string.settings_about_summary),
-                onClick = actions.openAbout,
-            )
+            SettingsGroup(title = null) {
+                LinkRow(
+                    title = stringResource(R.string.settings_about),
+                    summary = stringResource(R.string.settings_about_summary),
+                    onClick = actions.openAbout,
+                )
+            }
         }
     }
 }
@@ -333,14 +337,28 @@ private fun NudgeTimeDialog(minuteOfDay: Int, onConfirm: (hour: Int, minute: Int
     )
 }
 
+/** One settings section: its title, then its rows together on a card. */
 @Composable
-private fun SectionHeader(text: String, modifier: Modifier = Modifier) {
-    Text(
-        text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-    )
+private fun SettingsGroup(title: String?, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Column(modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+        if (title != null) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .padding(horizontal = 4.dp, vertical = 8.dp)
+                    .semantics { heading() },
+            )
+        }
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            border = BudgetTheme.cardBorder,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(modifier = Modifier.padding(vertical = 4.dp), content = content)
+        }
+    }
 }
 
 /** The whole row toggles, so the touch target is large and TalkBack reads one switch. */
@@ -433,8 +451,7 @@ private const val MINUTES_PER_HOUR = 60
 
 @Composable
 private fun PrivacySection(secureScreen: Boolean, smsRetention: SmsRetention, actions: SettingsActions) {
-    Column {
-        SectionHeader(stringResource(R.string.settings_section_privacy))
+    SettingsGroup(stringResource(R.string.settings_section_privacy)) {
         SwitchRow(
             title = stringResource(R.string.settings_secure_screen),
             summary = stringResource(R.string.settings_secure_screen_summary),
@@ -465,8 +482,7 @@ private fun PrivacySection(secureScreen: Boolean, smsRetention: SmsRetention, ac
 
 @Composable
 private fun AppearanceSection(appearance: AppearanceSettings, actions: SettingsActions) {
-    Column {
-        SectionHeader(stringResource(R.string.settings_section_appearance))
+    SettingsGroup(stringResource(R.string.settings_section_appearance)) {
         var picking by rememberSaveable { mutableStateOf(false) }
         LinkRow(
             title = stringResource(R.string.settings_theme),
@@ -498,8 +514,7 @@ private fun AppearanceSection(appearance: AppearanceSettings, actions: SettingsA
 
 @Composable
 private fun SmsSection(unparsedCount: Int, actions: SettingsActions) {
-    Column {
-        SectionHeader(stringResource(R.string.settings_section_sms))
+    SettingsGroup(stringResource(R.string.settings_section_sms)) {
         var picking by rememberSaveable { mutableStateOf(false) }
         LinkRow(
             title = stringResource(R.string.settings_import_older),
@@ -538,8 +553,7 @@ private fun SmsSection(unparsedCount: Int, actions: SettingsActions) {
 
 @Composable
 private fun DataSection(busy: Boolean, restorePrompt: RestorePrompt?, actions: SettingsActions) {
-    Column {
-        SectionHeader(stringResource(R.string.settings_section_data))
+    SettingsGroup(stringResource(R.string.settings_section_data)) {
         var confirmRestore by rememberSaveable { mutableStateOf(false) }
         var confirmFresh by rememberSaveable { mutableStateOf(false) }
         // Export files are plaintext (audit F2): say so, and where, before the file picker opens.
@@ -644,6 +658,8 @@ internal fun LinkRow(
             Text(title, color = if (destructive) MaterialTheme.colorScheme.error else Color.Unspecified)
         },
         supportingContent = { Text(summary) },
+        // Clear, so the row shows whatever it sits on (a settings card, a plain screen).
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         modifier = modifier
             .alpha(if (enabled) 1f else DISABLED_ALPHA)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
