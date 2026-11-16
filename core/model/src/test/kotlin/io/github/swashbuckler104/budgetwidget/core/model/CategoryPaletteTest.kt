@@ -55,6 +55,23 @@ class CategoryPaletteTest {
     }
 
     @Test
+    fun `icon tiles are deep on dark and pale on light, in the color's own hue`() {
+        CategoryPalette.colors.forEach { color ->
+            val dark = CategoryPalette.container(color, dark = true)
+            val light = CategoryPalette.container(color, dark = false)
+            assertThat(dark ushr 24).isEqualTo(0xFF)
+            assertThat(light ushr 24).isEqualTo(0xFF)
+            // The bright stored color is the icon on the dark tile: it must stand out from it.
+            assertThat(CategoryPalette.contrastOnWhite(dark)).isAtLeast(10.0)
+            assertThat(CategoryPalette.contrastOnWhite(light)).isAtMost(1.5)
+            if (chroma(color) >= 0.15f) {
+                assertThat(hue(dark)).isWithin(6f).of(hue(color))
+                assertThat(hue(light)).isWithin(6f).of(hue(color))
+            }
+        }
+    }
+
+    @Test
     fun `colors already dark enough are untouched`() {
         val navy = 0xFF1A237E.toInt()
         assertThat(CategoryPalette.forLightSurface(navy)).isEqualTo(navy)

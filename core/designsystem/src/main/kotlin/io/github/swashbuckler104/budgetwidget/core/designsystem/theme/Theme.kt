@@ -95,13 +95,12 @@ object BudgetTheme {
     fun categoryColor(argb: Int): Color = Color(if (isDarkSurface) argb else CategoryPalette.forLightSurface(argb))
 
     /**
-     * The disc behind a category's emoji. On dark surfaces it is nearly solid: any thin tint of a
-     * bright shade over black blends into a muddy olive or brown. On light surfaces it is a pastel tint.
+     * The tile behind a category's icon: a deep shade of the category's own hue on dark, a pale
+     * one on light (see [CategoryPalette.container]). Never a see-through tint, which turns muddy.
      */
     @Composable
     @ReadOnlyComposable
-    fun categoryContainer(argb: Int): Color =
-        categoryColor(argb).copy(alpha = if (isDarkSurface) DARK_CONTAINER_ALPHA else LIGHT_CONTAINER_ALPHA)
+    fun categoryContainer(argb: Int): Color = Color(CategoryPalette.container(argb, isDarkSurface))
 
     /** The hairline that lifts a card off the background; tonal steps alone look flat on dark. */
     val cardBorder: BorderStroke
@@ -129,8 +128,6 @@ object BudgetTheme {
         get() = MaterialTheme.colorScheme.surface.luminance() < DARK_SURFACE
 
     private const val DARK_SURFACE = 0.5f
-    private const val DARK_CONTAINER_ALPHA = 0.85f
-    private const val LIGHT_CONTAINER_ALPHA = 0.2f
     private const val CARD_BORDER_ALPHA = 0.7f
     private const val HERO_FADE = 0.55f
 }

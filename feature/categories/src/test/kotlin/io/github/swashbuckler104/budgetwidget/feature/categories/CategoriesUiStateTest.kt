@@ -1,6 +1,7 @@
 package io.github.swashbuckler104.budgetwidget.feature.categories
 
 import com.google.common.truth.Truth.assertThat
+import io.github.swashbuckler104.budgetwidget.core.designsystem.component.CategoryIcons
 import io.github.swashbuckler104.budgetwidget.core.model.Category
 import io.github.swashbuckler104.budgetwidget.core.model.CategoryGroup
 import io.github.swashbuckler104.budgetwidget.core.model.CategoryKind
@@ -41,5 +42,11 @@ class CategoriesUiStateTest {
         assertThat(firstGrapheme(" 🐶🐱 ")).isEqualTo("🐶")
         assertThat(firstGrapheme("👨‍👩‍👧x")).isEqualTo("👨‍👩‍👧")
         assertThat(firstGrapheme("  ")).isEmpty()
+    }
+
+    @Test
+    fun `every icon offered in the editor has a drawn icon`() {
+        assertThat(CATEGORY_EMOJI.filter { CategoryIcons.forEmoji(it) == null }).isEmpty()
+        assertThat(CategoryIcons.forEmoji("🦄")).isNull()
     }
 }

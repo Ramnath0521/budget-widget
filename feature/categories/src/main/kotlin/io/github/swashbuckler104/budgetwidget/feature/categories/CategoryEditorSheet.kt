@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -34,9 +35,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -48,6 +46,7 @@ import io.github.swashbuckler104.budgetwidget.core.data.category.CategoryReposit
 import io.github.swashbuckler104.budgetwidget.core.data.category.CategoryResult
 import io.github.swashbuckler104.budgetwidget.core.designsystem.component.BudgetBottomSheet
 import io.github.swashbuckler104.budgetwidget.core.designsystem.component.CategoryAvatar
+import io.github.swashbuckler104.budgetwidget.core.designsystem.component.CategoryGlyph
 import io.github.swashbuckler104.budgetwidget.core.designsystem.theme.BudgetTheme
 import io.github.swashbuckler104.budgetwidget.core.model.CategoryKind
 
@@ -115,19 +114,35 @@ internal fun CategoryEditorSheet(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
+                val accent = BudgetTheme.categoryColor(state.colorArgb)
+                val tile = RoundedCornerShape(ICON_CELL_CORNER)
                 CATEGORY_EMOJI.forEach { emoji ->
                     val selected = emoji == state.emoji
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(48.dp)
-                            .clip(CircleShape)
+                            .clip(tile)
                             .background(
-                                if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
+                                if (selected) {
+                                    BudgetTheme.categoryContainer(state.colorArgb)
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceContainerHigh
+                                },
                             )
+                            .then(if (selected) Modifier.border(1.5.dp, accent, tile) else Modifier)
                             .clickable(role = Role.RadioButton) { onChange { it.copy(emoji = emoji) } }
-                            .semantics { this.selected = selected },
-                    ) { Text(emoji, style = MaterialTheme.typography.titleLarge) }
+                            .semantics {
+                                this.selected = selected
+                                contentDescription = emoji
+                            },
+                    ) {
+                        CategoryGlyph(
+                            emoji,
+                            tint = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+                            size = 24.dp,
+                        )
+                    }
                 }
             }
             OutlinedTextField(
@@ -148,39 +163,26 @@ internal fun CategoryEditorSheet(
                         val selected = color == state.colorArgb
                         val label = stringResource(R.string.categories_editor_color_n, index + 1)
                         val swatch = BudgetTheme.categoryColor(color)
+                        // A plain dot, like the icon tiles: the chosen one gets a ring with a gap.
                         Box(
+                            contentAlignment = Alignment.Center,
                             modifier = Modifier
                                 .size(48.dp)
-                                .drawBehind {
-                                    // Neon glow: the swatch color fading out around it.
-                                    drawCircle(
-                                        Brush.radialGradient(
-                                            0.55f to swatch.copy(alpha = 0.7f),
-                                            1f to Color.Transparent,
-                                            radius = size.minDimension / 2,
-                                        ),
-                                    )
-                                }
-                                .padding(7.dp)
                                 .clip(CircleShape)
-                                .background(swatch)
-                                .then(
-                                    if (selected) {
-                                        Modifier.border(
-                                            3.dp,
-                                            MaterialTheme.colorScheme.onSurface,
-                                            CircleShape,
-                                        )
-                                    } else {
-                                        Modifier
-                                    },
-                                )
+                                .then(if (selected) Modifier.border(2.dp, swatch, CircleShape) else Modifier)
                                 .clickable(role = Role.RadioButton) { onChange { it.copy(colorArgb = color) } }
                                 .semantics {
                                     this.selected = selected
                                     contentDescription = label
                                 },
-                        )
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(if (selected) 30.dp else 34.dp)
+                                    .clip(CircleShape)
+                                    .background(swatch),
+                            )
+                        }
                     }
                 }
                 Text(stringResource(R.string.categories_editor_kind), style = MaterialTheme.typography.titleSmall)
@@ -203,6 +205,8 @@ internal fun CategoryEditorSheet(
         }
     }
 }
+
+private val ICON_CELL_CORNER = 14.dp
 
 private fun CategoryResult?.isNameError() =
     this == CategoryResult.BlankName || this == CategoryResult.DuplicateName || this == CategoryResult.NameTooLong

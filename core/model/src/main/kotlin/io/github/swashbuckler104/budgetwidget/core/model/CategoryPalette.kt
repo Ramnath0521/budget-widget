@@ -62,21 +62,8 @@ object CategoryPalette {
      */
     fun forLightSurface(argb: Int): Int {
         if (contrastOnWhite(argb) >= MIN_CONTRAST_ON_WHITE) return argb
+        val (hue, saturation, lightness) = toHsl(argb)
         val alpha = argb ushr 24
-        val r = (argb shr 16 and 0xFF) / 255f
-        val g = (argb shr 8 and 0xFF) / 255f
-        val b = (argb and 0xFF) / 255f
-        val max = maxOf(r, g, b)
-        val min = minOf(r, g, b)
-        val delta = max - min
-        val lightness = (max + min) / 2f
-        val saturation = if (delta == 0f) 0f else delta / (1f - abs(2f * lightness - 1f))
-        val hue = when {
-            delta == 0f -> 0f
-            max == r -> 60f * ((g - b) / delta).mod(6f)
-            max == g -> 60f * ((b - r) / delta + 2f)
-            else -> 60f * ((r - g) / delta + 4f)
-        }
         var l = lightness
         var shade = argb
         while (contrastOnWhite(shade) < MIN_CONTRAST_ON_WHITE && l > 0f) {
@@ -84,6 +71,42 @@ object CategoryPalette {
             shade = hsl(alpha, hue, saturation, l)
         }
         return shade
+    }
+
+    /**
+     * The opaque tile behind a category icon (ADR-0052): [argb]'s hue at a fixed lightness, deep on
+     * a dark surface and pale on a light one, with saturation capped so no tile shouts.
+     */
+    fun container(argb: Int, dark: Boolean): Int {
+        val (hue, saturation, _) = toHsl(argb)
+        return if (dark) {
+            hsl(OPAQUE, hue, saturation.coerceAtMost(DARK_TILE_SATURATION), DARK_TILE_LIGHTNESS)
+        } else {
+            hsl(OPAQUE, hue, saturation.coerceAtMost(LIGHT_TILE_SATURATION), LIGHT_TILE_LIGHTNESS)
+        }
+    }
+
+    /** Hue in degrees, then saturation and lightness in 0..1. */
+    private fun toHsl(argb: Int): Triple<Float, Float, Float> {
+        val r = (argb shr 16 and 0xFF) / 255f
+        val g = (argb shr 8 and 0xFF) / 255f
+        val b = (argb and 0xFF) / 255f
+        val max = maxOf(r, g, b)
+        val min = minOf(r, g, b)
+        val delta = max - min
+        val lightness = (max + min) / 2f
+        val saturation = if (delta == 0f || lightness == 0f || lightness == 1f) {
+            0f
+        } else {
+            delta / (1f - abs(2f * lightness - 1f))
+        }
+        val hue = when {
+            delta == 0f -> 0f
+            max == r -> 60f * ((g - b) / delta).mod(6f)
+            max == g -> 60f * ((b - r) / delta + 2f)
+            else -> 60f * ((r - g) / delta + 4f)
+        }
+        return Triple(hue, saturation, lightness)
     }
 
     /** WCAG contrast ratio of the opaque [argb] against white. */
@@ -116,4 +139,9 @@ object CategoryPalette {
 
     const val MIN_CONTRAST_ON_WHITE = 3.0
     private const val LIGHTNESS_STEP = 0.01f
+    private const val OPAQUE = 0xFF
+    private const val DARK_TILE_SATURATION = 0.5f
+    private const val DARK_TILE_LIGHTNESS = 0.16f
+    private const val LIGHT_TILE_SATURATION = 0.8f
+    private const val LIGHT_TILE_LIGHTNESS = 0.92f
 }
