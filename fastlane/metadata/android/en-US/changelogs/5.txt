@@ -1,0 +1,8 @@
+- New look: deeper colors, clear cards and the app's own palette.
+- Category icons redrawn as line icons; 111 to choose from.
+- Tabs: Transactions, Analysis, Categories. Filters behind one button.
+- Widgets match the app and read well on any wallpaper.
+- Backups can be protected with a password.
+- Keep original SMS text forever, 90 or 30 days.
+- Add an unparsed bank SMS as a transaction in one tap.
+- Deleted unparsed SMS no longer come back.

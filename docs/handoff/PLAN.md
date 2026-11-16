@@ -66,6 +66,11 @@ categories and a budget in progress.
 | 12 | E7 supply chain (verification metadata, provenance) | S | pairs with D reproducible build |
 | - | B5 "Teach this message" | - | assessed, deferred (see B5) |
 
+**Release split (owner, 2026-11-16).** 1.0.3 ships E5-E7, C2-C3, B5 lite and the design rework
+(ADR-0051 to ADR-0054). Moved to **2.0.0 "Play Store ready"**: all of D, and the first round of
+parser fixes from the owner's real unparsed messages (B4 loop run on their C3 report), which waits
+until they have collected enough of them.
+
 ---
 
 ## A. UI fixes
@@ -393,7 +398,7 @@ content matches the preview. `sqlite3` counts before and after are equal.
 
 ---
 
-## D. Distribution
+## D. Distribution (2.0.0)
 
 Facts checked on 2026-11-15 (re-check before submitting; items marked *verify* came from
 secondary sources):
