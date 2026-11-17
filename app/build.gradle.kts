@@ -13,6 +13,17 @@ baselineProfile {
 }
 
 android {
+    // Reproducible from the source archive (ADR-0050): no git commit file in the APK (the archive
+    // has no .git), and no dependency list encrypted with Google's key in the signing block, which
+    // F-Droid and IzzyOnDroid ask to be off and nobody else can read.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+    buildTypes.getByName("release") {
+        vcsInfo.include = false
+    }
+
     // Release signing comes only from the environment (CI secrets, see release.yml). Without
     // KEYSTORE_PATH the release APK is built unsigned, so `assembleRelease` works for everyone.
     val keystorePath = providers.environmentVariable("KEYSTORE_PATH").orNull

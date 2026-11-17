@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Translucent widget background (ADR-0033): the wallpaper shows through. Brand light surface. -->
+<!-- Widget background (ADR-0054): nearly opaque so text reads over any wallpaper. Brand light surface. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:alpha="0.66" android:color="#F5FBF8" />
+    <item android:alpha="0.92" android:color="#F6F7FC" />
 </selector>

@@ -120,7 +120,8 @@ fun StatCard(
 ) {
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        border = BudgetTheme.cardBorder,
     ) {
         val valueStyle = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {

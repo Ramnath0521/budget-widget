@@ -1,6 +1,5 @@
 package io.github.swashbuckler104.budgetwidget.widget
 
-import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.TextUnit
@@ -16,17 +15,13 @@ import io.github.swashbuckler104.budgetwidget.core.designsystem.theme.MoneyColor
 import io.github.swashbuckler104.budgetwidget.core.model.CategoryPalette
 
 /**
- * Widgets follow the wallpaper (dynamic color) on Android 12+, like the app, and use the app's
- * brand palette below. Light and dark come from the launcher's configuration, so a theme switch
+ * Widgets wear the brand palette on every Android version (ADR-0054), so they look like the app
+ * whatever the wallpaper. Light and dark come from the launcher's configuration, so a theme switch
  * needs no redraw from us.
  */
 @Composable
 internal fun WidgetTheme(content: @Composable () -> Unit) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        GlanceTheme(content = content)
-    } else {
-        GlanceTheme(colors = BrandGlanceColors, content = content)
-    }
+    GlanceTheme(colors = BrandGlanceColors, content = content)
 }
 
 private val BrandGlanceColors = ColorProviders(light = BrandColors.light, dark = BrandColors.dark)
@@ -62,8 +57,9 @@ internal object WidgetMoney {
 }
 
 /**
- * Translucent surfaces (docs/DECISIONS.md ADR-0033): shape drawables whose colors live in
- * `res/color*`. The launcher resolves them, so day/night and wallpaper changes need no redraw.
+ * Widget surfaces: shape drawables whose colors live in `res/color*`, so the launcher resolves
+ * day and night without a redraw. The background is nearly opaque (ADR-0054): text has to stay
+ * readable over any wallpaper; a hint of it still shows through.
  */
 internal object WidgetSurfaces {
     val background: ImageProvider get() = ImageProvider(R.drawable.widget_background)

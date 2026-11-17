@@ -15,6 +15,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -77,6 +78,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.swashbuckler104.budgetwidget.core.designsystem.component.CategoryAvatar
+import io.github.swashbuckler104.budgetwidget.core.designsystem.theme.BudgetTheme
 import io.github.swashbuckler104.budgetwidget.core.model.CategoryGroup
 
 private val SMS_PERMISSIONS = arrayOf(Manifest.permission.RECEIVE_SMS, Manifest.permission.READ_SMS)
@@ -249,7 +251,7 @@ private fun BottomBar(state: OnboardingState, actions: OnboardingActions) {
             OnboardingStep.entries.forEach {
                 Box(
                     modifier = Modifier
-                        .size(8.dp)
+                        .size(width = if (it == state.step) 20.dp else 8.dp, height = 8.dp)
                         .clip(CircleShape)
                         .background(
                             if (it ==
@@ -442,15 +444,49 @@ private fun WidgetStep(canPin: Boolean, onPin: () -> Unit) {
 @Composable
 private fun StepHeader(icon: ImageVector, title: String) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp))
+        // The step's emblem: the accent icon on the same gradient tile as the app's headline card.
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(72.dp)
+                .clip(MaterialTheme.shapes.large)
+                .background(BudgetTheme.heroBrush)
+                .border(
+                    1.dp,
+                    MaterialTheme.colorScheme.primary.copy(alpha = EMBLEM_EDGE_ALPHA),
+                    MaterialTheme.shapes.large,
+                ),
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(36.dp),
+            )
+        }
         Text(title, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.semantics { heading() })
     }
 }
 
 @Composable
 private fun Bullet(text: String) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("•", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
+    // Each point on its own card, so a step reads as a short list and not a wall of text.
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .border(BudgetTheme.cardBorder, MaterialTheme.shapes.medium)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+    ) {
+        Icon(
+            Icons.Rounded.CheckCircle,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp),
+        )
         Text(text, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
     }
 }
@@ -463,6 +499,8 @@ private fun Granted(text: String) {
         Spacer(Modifier.weight(1f))
     }
 }
+
+private const val EMBLEM_EDGE_ALPHA = 0.35f
 
 private val Backfill.title: Int
     get() = when (this) {

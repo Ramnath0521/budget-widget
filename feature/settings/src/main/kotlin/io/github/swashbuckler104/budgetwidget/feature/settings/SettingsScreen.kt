@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,6 +38,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -66,6 +68,8 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
@@ -74,7 +78,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.swashbuckler104.budgetwidget.core.datastore.AppearanceSettings
+import io.github.swashbuckler104.budgetwidget.core.datastore.SmsRetention
 import io.github.swashbuckler104.budgetwidget.core.datastore.ThemeMode
+import io.github.swashbuckler104.budgetwidget.core.designsystem.theme.BudgetTheme
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -99,7 +105,7 @@ fun SettingsRoute(
     }
     val appVersion = remember(context) { appVersion(context) }
     val backup = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(MIME_JSON)) { uri ->
-        uri?.let { viewModel.backup(it, appVersion) }
+        if (uri == null) viewModel.cancelBackup() else viewModel.backup(uri, appVersion)
     }
     val export = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(MIME_CSV)) { uri ->
         uri?.let(viewModel::exportCsv)
@@ -144,14 +150,20 @@ fun SettingsRoute(
             setTheme = viewModel::setTheme,
             setDynamicColor = viewModel::setDynamicColor,
             setSecureScreen = viewModel::setSecureScreen,
+            setSmsRetention = viewModel::setSmsRetention,
             importOlder = viewModel::importOlder,
             openAccounts = onOpenAccounts,
             openSmsIssues = onOpenSmsIssues,
             openParserFeedback = onOpenParserFeedback,
             openAbout = onOpenAbout,
             exportCsv = { export.launch(fileName("transactions", "csv")) },
-            backup = { backup.launch(fileName("backup", "json")) },
+            backup = { passphrase ->
+                viewModel.prepareBackup(passphrase)
+                backup.launch(fileName("backup", "json"))
+            },
             restore = { restore.launch(arrayOf(MIME_JSON, "text/plain", "application/octet-stream")) },
+            restoreWithPassphrase = viewModel::restoreWithPassphrase,
+            cancelRestore = viewModel::cancelRestore,
             startFresh = viewModel::startFresh,
             allowNotifications = {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -177,14 +189,18 @@ internal class SettingsActions(
     val setTheme: (ThemeMode) -> Unit = {},
     val setDynamicColor: (Boolean) -> Unit = {},
     val setSecureScreen: (Boolean) -> Unit = {},
+    val setSmsRetention: (SmsRetention) -> Unit = {},
     val importOlder: (days: Int) -> Unit = {},
     val openAccounts: () -> Unit = {},
     val openSmsIssues: () -> Unit = {},
     val openParserFeedback: () -> Unit = {},
     val openAbout: () -> Unit = {},
     val exportCsv: () -> Unit = {},
-    val backup: () -> Unit = {},
+    /** A null passphrase means a plain backup (ADR-0044). */
+    val backup: (passphrase: String?) -> Unit = {},
     val restore: () -> Unit = {},
+    val restoreWithPassphrase: (String) -> Unit = {},
+    val cancelRestore: () -> Unit = {},
     val startFresh: () -> Unit = {},
 )
 
@@ -222,38 +238,40 @@ internal fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(vertical = 8.dp),
         ) {
-            SectionHeader(stringResource(R.string.settings_section_notifications))
             val notifications = state.notifications
-            if (notifications.enabled && notificationsBlocked) {
-                BlockedCard(onAllow = actions.allowNotifications)
+            SettingsGroup(stringResource(R.string.settings_section_notifications)) {
+                if (notifications.enabled && notificationsBlocked) {
+                    BlockedCard(onAllow = actions.allowNotifications)
+                }
+                SwitchRow(
+                    title = stringResource(R.string.settings_notifications),
+                    summary = stringResource(R.string.settings_notifications_summary),
+                    checked = notifications.enabled,
+                    onCheckedChange = actions.setNotificationsEnabled,
+                )
+                MinAmountField(
+                    initialPaise = notifications.minAmountPaise,
+                    enabled = notifications.enabled,
+                    onChange = actions.setMinAmount,
+                )
             }
-            SwitchRow(
-                title = stringResource(R.string.settings_notifications),
-                summary = stringResource(R.string.settings_notifications_summary),
-                checked = notifications.enabled,
-                onCheckedChange = actions.setNotificationsEnabled,
-            )
-            MinAmountField(
-                initialPaise = notifications.minAmountPaise,
-                enabled = notifications.enabled,
-                onChange = actions.setMinAmount,
-            )
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            SectionHeader(stringResource(R.string.settings_section_day))
             val nudge = state.nudge
             val time = formatMinuteOfDay(nudge.minuteOfDay)
-            SwitchRow(
-                title = stringResource(R.string.settings_nudge),
-                summary = stringResource(R.string.settings_nudge_summary, time),
-                checked = nudge.enabled,
-                onCheckedChange = actions.setNudgeEnabled,
-            )
             var picking by rememberSaveable { mutableStateOf(false) }
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.settings_nudge_time)) },
-                supportingContent = { Text(time) },
-                modifier = Modifier.clickable(enabled = nudge.enabled, role = Role.Button) { picking = true },
-            )
+            SettingsGroup(stringResource(R.string.settings_section_day)) {
+                SwitchRow(
+                    title = stringResource(R.string.settings_nudge),
+                    summary = stringResource(R.string.settings_nudge_summary, time),
+                    checked = nudge.enabled,
+                    onCheckedChange = actions.setNudgeEnabled,
+                )
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.settings_nudge_time)) },
+                    supportingContent = { Text(time) },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    modifier = Modifier.clickable(enabled = nudge.enabled, role = Role.Button) { picking = true },
+                )
+            }
             if (picking) {
                 NudgeTimeDialog(
                     minuteOfDay = nudge.minuteOfDay,
@@ -264,28 +282,25 @@ internal fun SettingsScreen(
                     onDismiss = { picking = false },
                 )
             }
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            SectionHeader(stringResource(R.string.settings_section_sorting))
-            SwitchRow(
-                title = stringResource(R.string.settings_auto_sort),
-                summary = stringResource(R.string.settings_auto_sort_summary),
-                checked = state.autoSort,
-                onCheckedChange = actions.setAutoSort,
-            )
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            PrivacySection(state.secureScreen, actions)
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            SettingsGroup(stringResource(R.string.settings_section_sorting)) {
+                SwitchRow(
+                    title = stringResource(R.string.settings_auto_sort),
+                    summary = stringResource(R.string.settings_auto_sort_summary),
+                    checked = state.autoSort,
+                    onCheckedChange = actions.setAutoSort,
+                )
+            }
+            PrivacySection(state.secureScreen, state.smsRetention, actions)
             AppearanceSection(state.appearance, actions)
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             SmsSection(state.unparsedCount, actions)
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            DataSection(state.busy, actions)
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            LinkRow(
-                title = stringResource(R.string.settings_about),
-                summary = stringResource(R.string.settings_about_summary),
-                onClick = actions.openAbout,
-            )
+            DataSection(state.busy, state.restorePrompt, actions)
+            SettingsGroup(title = null) {
+                LinkRow(
+                    title = stringResource(R.string.settings_about),
+                    summary = stringResource(R.string.settings_about_summary),
+                    onClick = actions.openAbout,
+                )
+            }
         }
     }
 }
@@ -322,14 +337,28 @@ private fun NudgeTimeDialog(minuteOfDay: Int, onConfirm: (hour: Int, minute: Int
     )
 }
 
+/** One settings section: its title, then its rows together on a card. */
 @Composable
-private fun SectionHeader(text: String, modifier: Modifier = Modifier) {
-    Text(
-        text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-    )
+private fun SettingsGroup(title: String?, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Column(modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+        if (title != null) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .padding(horizontal = 4.dp, vertical = 8.dp)
+                    .semantics { heading() },
+            )
+        }
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            border = BudgetTheme.cardBorder,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(modifier = Modifier.padding(vertical = 4.dp), content = content)
+        }
+    }
 }
 
 /** The whole row toggles, so the touch target is large and TalkBack reads one switch. */
@@ -421,22 +450,39 @@ private const val PAISE_PER_RUPEE = 100L
 private const val MINUTES_PER_HOUR = 60
 
 @Composable
-private fun PrivacySection(secureScreen: Boolean, actions: SettingsActions) {
-    Column {
-        SectionHeader(stringResource(R.string.settings_section_privacy))
+private fun PrivacySection(secureScreen: Boolean, smsRetention: SmsRetention, actions: SettingsActions) {
+    SettingsGroup(stringResource(R.string.settings_section_privacy)) {
         SwitchRow(
             title = stringResource(R.string.settings_secure_screen),
             summary = stringResource(R.string.settings_secure_screen_summary),
             checked = secureScreen,
             onCheckedChange = actions.setSecureScreen,
         )
+        var picking by rememberSaveable { mutableStateOf(false) }
+        LinkRow(
+            title = stringResource(R.string.settings_sms_retention),
+            summary = stringResource(smsRetention.label),
+            onClick = { picking = true },
+        )
+        if (picking) {
+            ChoiceDialog(
+                title = stringResource(R.string.settings_sms_retention),
+                body = stringResource(R.string.settings_sms_retention_body),
+                options = SmsRetention.entries.map { stringResource(it.label) },
+                selected = smsRetention.ordinal,
+                onPick = {
+                    actions.setSmsRetention(SmsRetention.entries[it])
+                    picking = false
+                },
+                onDismiss = { picking = false },
+            )
+        }
     }
 }
 
 @Composable
 private fun AppearanceSection(appearance: AppearanceSettings, actions: SettingsActions) {
-    Column {
-        SectionHeader(stringResource(R.string.settings_section_appearance))
+    SettingsGroup(stringResource(R.string.settings_section_appearance)) {
         var picking by rememberSaveable { mutableStateOf(false) }
         LinkRow(
             title = stringResource(R.string.settings_theme),
@@ -468,8 +514,7 @@ private fun AppearanceSection(appearance: AppearanceSettings, actions: SettingsA
 
 @Composable
 private fun SmsSection(unparsedCount: Int, actions: SettingsActions) {
-    Column {
-        SectionHeader(stringResource(R.string.settings_section_sms))
+    SettingsGroup(stringResource(R.string.settings_section_sms)) {
         var picking by rememberSaveable { mutableStateOf(false) }
         LinkRow(
             title = stringResource(R.string.settings_import_older),
@@ -507,9 +552,8 @@ private fun SmsSection(unparsedCount: Int, actions: SettingsActions) {
 }
 
 @Composable
-private fun DataSection(busy: Boolean, actions: SettingsActions) {
-    Column {
-        SectionHeader(stringResource(R.string.settings_section_data))
+private fun DataSection(busy: Boolean, restorePrompt: RestorePrompt?, actions: SettingsActions) {
+    SettingsGroup(stringResource(R.string.settings_section_data)) {
         var confirmRestore by rememberSaveable { mutableStateOf(false) }
         var confirmFresh by rememberSaveable { mutableStateOf(false) }
         // Export files are plaintext (audit F2): say so, and where, before the file picker opens.
@@ -551,24 +595,34 @@ private fun DataSection(busy: Boolean, actions: SettingsActions) {
                 onDismiss = { confirmRestore = false },
             )
         }
-        confirmExport?.let { kind ->
-            ConfirmDialog(
-                title = stringResource(
-                    if (kind ==
-                        ExportKind.CSV
-                    ) {
-                        R.string.settings_export_confirm_title_csv
-                    } else {
-                        R.string.settings_export_confirm_title_backup
-                    },
-                ),
+        when (confirmExport) {
+            ExportKind.CSV -> ConfirmDialog(
+                title = stringResource(R.string.settings_export_confirm_title_csv),
                 body = stringResource(R.string.settings_export_confirm_body),
                 confirm = stringResource(R.string.settings_export_confirm),
                 onConfirm = {
                     confirmExport = null
-                    if (kind == ExportKind.CSV) actions.exportCsv() else actions.backup()
+                    actions.exportCsv()
                 },
                 onDismiss = { confirmExport = null },
+            )
+
+            ExportKind.BACKUP -> BackupDialog(
+                onConfirm = { passphrase ->
+                    confirmExport = null
+                    actions.backup(passphrase)
+                },
+                onDismiss = { confirmExport = null },
+            )
+
+            null -> Unit
+        }
+        restorePrompt?.let { prompt ->
+            RestorePasswordDialog(
+                wrong = prompt.wrong,
+                busy = busy,
+                onConfirm = actions.restoreWithPassphrase,
+                onDismiss = actions.cancelRestore,
             )
         }
         if (confirmFresh) {
@@ -604,6 +658,8 @@ internal fun LinkRow(
             Text(title, color = if (destructive) MaterialTheme.colorScheme.error else Color.Unspecified)
         },
         supportingContent = { Text(summary) },
+        // Clear, so the row shows whatever it sits on (a settings card, a plain screen).
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         modifier = modifier
             .alpha(if (enabled) 1f else DISABLED_ALPHA)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
@@ -617,12 +673,20 @@ private fun ChoiceDialog(
     selected: Int?,
     onPick: (Int) -> Unit,
     onDismiss: () -> Unit,
+    body: String? = null,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
             Column(modifier = Modifier.selectableGroup()) {
+                if (body != null) {
+                    Text(
+                        body,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(bottom = 8.dp),
+                    )
+                }
                 options.forEachIndexed { index, option ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -677,6 +741,13 @@ private val ThemeMode.label: Int
         ThemeMode.DARK -> R.string.settings_theme_dark
     }
 
+private val SmsRetention.label: Int
+    get() = when (this) {
+        SmsRetention.FOREVER -> R.string.settings_sms_retention_forever
+        SmsRetention.DAYS_90 -> R.string.settings_sms_retention_90
+        SmsRetention.DAYS_30 -> R.string.settings_sms_retention_30
+    }
+
 private fun messageText(resources: Resources, message: SettingsMessage): String = when (message) {
     SettingsMessage.BackedUp -> resources.getString(R.string.settings_msg_backed_up)
 
@@ -690,6 +761,8 @@ private fun messageText(resources: Resources, message: SettingsMessage): String 
     SettingsMessage.BackupTooNew -> resources.getString(R.string.settings_msg_too_new)
 
     SettingsMessage.FileFailed -> resources.getString(R.string.settings_msg_file_failed)
+
+    SettingsMessage.BackupNotSaved -> resources.getString(R.string.settings_msg_backup_not_saved)
 
     is SettingsMessage.StartedFresh ->
         resources.getQuantityString(R.plurals.settings_msg_started_fresh, message.removed, message.removed)

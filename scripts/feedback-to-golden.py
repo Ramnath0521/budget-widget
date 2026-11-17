@@ -3,15 +3,19 @@
 
 Usage: scripts/feedback-to-golden.py <report.txt> [--dry-run]
 
-Reads the report the app emails or saves (format "budget-widget-parser-feedback v1", see
-core/data/.../feedback/ParserFeedback.kt), and appends one stub per message to the matching
+Reads the report the app emails or saves (see core/data/.../feedback/ParserFeedback.kt): JSON
+Lines from 1.0.3 (ADR-0047; a pasted email body works too, even if the mail app wrapped long
+lines, and several reports can be concatenated), or the 1.0.2 text format
+("budget-widget-parser-feedback v1"). It appends one stub per message to the matching
 ingest/src/test/resources/golden/<bank>.txt, with `type: TODO`. Senders of banks we don't ship
 go to golden/unsupported.txt, which the tests do not load.
 
 A stub makes GoldenSmsTest fail until someone fills in the expected values by reading the SMS
-(docs/PARSER_IMPROVEMENT.md). Messages that still look unredacted (a run of 6+ digits other than
-the masked X's, or an @) are refused, never written. Standard library only.
+(docs/PARSER_IMPROVEMENT.md). Messages that still look unredacted (an @, or a run of 6+ digits
+that isn't the app's mask: all 9s except possibly the last 2) are refused, never written.
+Standard library only.
 """
+import json
 import pathlib
 import re
 import sys
@@ -26,13 +30,48 @@ BANKS = [
     (r"FEDBNK|FEDERAL", "federal"), (r"JTEDGE|JUPITR|JUPITER", "jupiter"), (r"SLICE|SLCEIT|SLCBNK", "slice"),
 ]
 ENTRY = re.compile(r"^--- (\d+) \| (.+?) \| ([A-Z_]+) \| (\d{4}-\d{2}) \| x(\d+)$")
-UNREDACTED = re.compile(r"(?<![X\d])\d{6,}|@")
+LONG_RUN = re.compile(r"\d{6,}")
+
+
+def looks_unredacted(body):
+    """1.0.3+ reports turn digits into 9s (ADR-0046); account and card numbers keep their last 2."""
+    return "@" in body or any(set(m[0][:-2]) != {"9"} for m in LONG_RUN.finditer(body))
 
 
 def parse(text):
-    lines = text.splitlines()
-    if not lines or lines[0].strip() != HEADER:
-        sys.exit(f"not a parser feedback report (first line must be '{HEADER}')")
+    if text.lstrip().startswith(HEADER):
+        return parse_v1(text)
+    return parse_json_lines(text)
+
+
+def parse_json_lines(text):
+    """One object per line. Lines that aren't JSON (the email's intro) are skipped. A line a mail
+    app wrapped is joined back: text is gathered until it parses as a whole object."""
+    entries, buffer = [], ""
+    for line in text.splitlines():
+        if not buffer and not line.lstrip().startswith("{"):
+            continue
+        buffer += line
+        try:
+            obj = json.loads(buffer)
+        except json.JSONDecodeError:
+            continue
+        buffer = ""
+        if not isinstance(obj, dict) or obj.get("v") != 2:
+            sys.exit(f"unsupported report line (expected v 2): {str(obj)[:60]}")
+        entries.append({
+            "n": str(len(entries) + 1), "sender": obj["sender"], "reason": obj["reason"],
+            "month": obj["month"], "count": str(obj["count"]), "body": obj["body"].replace("\n", "\\n"),
+        })
+    if buffer:
+        sys.exit("report ends in the middle of a message (cut short?)")
+    if not entries:
+        sys.exit("not a parser feedback report (no messages found)")
+    return entries
+
+
+def parse_v1(text):
+    lines = text.lstrip().splitlines()
     entries, current = [], None
     for line in lines[1:]:
         m = ENTRY.match(line)
@@ -73,7 +112,7 @@ def main():
     entries = parse(pathlib.Path(args[0]).read_text(encoding="utf-8"))
     refused, written = [], {}
     for e in entries:
-        if UNREDACTED.search(e["body"]):
+        if looks_unredacted(e["body"]):
             refused.append(e)
             continue
         written.setdefault(bank_file(e["sender"]), []).append(stub(e))

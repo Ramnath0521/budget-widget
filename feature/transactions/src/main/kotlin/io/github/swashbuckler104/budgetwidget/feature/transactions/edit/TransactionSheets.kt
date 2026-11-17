@@ -195,7 +195,10 @@ internal fun EditTransactionContent(
             }
         }
 
-        if (detail.smsBody != null) SmsBlock(detail, showSms, { showSms = it }, actions.onReportWrongAmount)
+        if (detail.smsBody != null) {
+            // A manual entry added from an SMS (ADR-0048): the user typed the amount, so no report.
+            SmsBlock(detail, showSms, { showSms = it }, actions.onReportWrongAmount.takeUnless { manual })
+        }
 
         HorizontalDivider()
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -235,7 +238,7 @@ internal fun EditTransactionContent(
 }
 
 @Composable
-private fun SmsBlock(detail: TransactionDetail, open: Boolean, onOpen: (Boolean) -> Unit, onReport: () -> Unit) {
+private fun SmsBlock(detail: TransactionDetail, open: Boolean, onOpen: (Boolean) -> Unit, onReport: (() -> Unit)?) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         TextButton(onClick = { onOpen(!open) }) {
             Icon(if (open) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore, contentDescription = null)
@@ -263,7 +266,7 @@ private fun SmsBlock(detail: TransactionDetail, open: Boolean, onOpen: (Boolean)
                     }
                 }
             }
-            TextButton(onClick = onReport) { Text(stringResource(R.string.edit_report_amount)) }
+            if (onReport != null) TextButton(onClick = onReport) { Text(stringResource(R.string.edit_report_amount)) }
         }
     }
 }
@@ -291,13 +294,28 @@ internal fun AddTransactionSheet(
     nowMillis: Long,
     onAdd: (ManualTransaction) -> Unit,
     onDismiss: () -> Unit,
+    prefill: AddPrefill? = null,
 ) {
-    // Outside the sheet's window, so typed input survives leaving the tab and process death.
-    val form = rememberSheetForm(ADD_FORM)
+    // Outside the sheet's window, so typed input survives leaving the tab and process death. A
+    // prefilled form has its own key, so it never mixes with a half-typed cash entry.
+    val form = rememberSheetForm(prefill?.let { "$ADD_FORM-sms-${it.key}" } ?: ADD_FORM)
     BudgetBottomSheet(onDismissRequest = onDismiss) {
-        AddTransactionContent(groups, categories, nowMillis, onAdd, form)
+        AddTransactionContent(groups, categories, nowMillis, onAdd, form, prefill)
     }
 }
+
+/**
+ * "Add as transaction" from an unparsed bank SMS (ADR-0048): first guesses for the form, and the
+ * SMS itself, shown at the top and saved as the transaction's source. [key] tells forms apart.
+ */
+internal data class AddPrefill(
+    val key: Long,
+    val amountPaise: Long?,
+    val direction: Direction?,
+    val occurredAt: Long,
+    val smsSender: String,
+    val smsBody: String,
+)
 
 @Composable
 internal fun AddTransactionContent(
@@ -306,14 +324,17 @@ internal fun AddTransactionContent(
     nowMillis: Long,
     onAdd: (ManualTransaction) -> Unit,
     form: SheetForm = rememberSheetForm(ADD_FORM),
+    prefill: AddPrefill? = null,
 ) {
-    var amountText by form.field("amountText") { "" }
-    var type by form.field("type") { EntryType.EXPENSE }
+    var amountText by form.field("amountText") {
+        prefill?.amountPaise?.let { formatInr(it).removePrefix("₹") }.orEmpty()
+    }
+    var type by form.field("type") { if (prefill?.direction == Direction.IN) EntryType.INCOME else EntryType.EXPENSE }
     var transferDirection by form.field("transferDirection") { Direction.OUT }
     var categoryId by form.field<Long?>("categoryId") { null }
     var name by form.field("name") { "" }
     var note by form.field("note") { "" }
-    var occurredAt by form.field("occurredAt") { nowMillis }
+    var occurredAt by form.field("occurredAt") { prefill?.occurredAt ?: nowMillis }
     var triedSave by form.field("triedSave") { false }
 
     val direction = type.direction(transferDirection)
@@ -328,10 +349,11 @@ internal fun AddTransactionContent(
             .padding(bottom = 16.dp),
     ) {
         Text(
-            stringResource(R.string.add_title),
+            stringResource(if (prefill != null) R.string.add_title_sms else R.string.add_title),
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.semantics { heading() },
         )
+        if (prefill != null) SourceSms(prefill.smsSender, prefill.smsBody)
         AmountField(amountText, { amountText = it }, error = triedSave && amount == null)
         FormSection(stringResource(R.string.edit_type)) {
             TypeSelector(type, { type = it })
@@ -365,11 +387,39 @@ internal fun AddTransactionContent(
             onClick = {
                 triedSave = true
                 if (amount != null && category != null) {
-                    onAdd(ManualTransaction(amount, direction, category.id, name, note, occurredAt))
+                    onAdd(
+                        ManualTransaction(
+                            amount,
+                            direction,
+                            category.id,
+                            name,
+                            note,
+                            occurredAt,
+                            smsSender = prefill?.smsSender,
+                            smsBody = prefill?.smsBody,
+                        ),
+                    )
                 }
             },
             modifier = Modifier.fillMaxWidth(),
         ) { Text(stringResource(R.string.add_save)) }
+    }
+}
+
+/** The SMS being added, so amounts and wording can be checked while filling the form. */
+@Composable
+private fun SourceSms(sender: String, body: String) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = MaterialTheme.shapes.small,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(sender, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+            SelectionContainer {
+                Text(body, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace))
+            }
+        }
     }
 }
 

@@ -188,7 +188,7 @@ class TransactionNotifierTest {
         assertThat(n.channelId).isEqualTo(NotificationChannels.TRANSACTIONS)
         assertThat(n.title()).isEqualTo("\u2212₹450 · Swiggy")
         assertThat(n.text()).startsWith("HDFC Bank ••1234 · ")
-        assertThat(n.actions.map { it.title.toString() }).containsExactly("🍔 Food", "🍔 Fuel", "🍔 Rent").inOrder()
+        assertThat(n.actions.map { it.title.toString() }).containsExactly("Food", "Fuel", "Rent").inOrder()
         assertThat(n.visibility).isEqualTo(Notification.VISIBILITY_PRIVATE)
         assertThat(n.publicVersion.title()).doesNotContain("450")
     }
@@ -208,13 +208,13 @@ class TransactionNotifierTest {
         notifier.onPendingAdded(payment, IngestOrigin.REALTIME)
         val buttons = transactionNotifications().single { it.tag == "txn:$payment" }.notification.actions
         // Seed order (Groceries, Restaurant, Public transport), archived Restaurant skipped, then Ignore.
-        assertThat(buttons.map { it.title.toString() }).containsExactly("🍔 Groceries", "🍔 Public transport", "Ignore")
+        assertThat(buttons.map { it.title.toString() }).containsExactly("Groceries", "Public transport", "Ignore")
             .inOrder()
 
         val income = txn("salary", direction = Direction.IN)
         notifier.onPendingAdded(income, IngestOrigin.REALTIME)
         val incomeButtons = transactionNotifications().single { it.tag == "txn:$income" }.notification.actions
-        assertThat(incomeButtons.map { it.title.toString() }).contains("🍔 Salary")
+        assertThat(incomeButtons.map { it.title.toString() }).contains("Salary")
     }
 
     @Test
@@ -293,7 +293,7 @@ class TransactionNotifierTest {
         handler.handle(NotificationCommand.Sort(id, food))
         assertThat(db.transactionDao().get(id)!!.status).isEqualTo(TransactionStatus.PENDING)
         val refreshed = transactionNotifications().single().notification
-        assertThat(refreshed.actions.map { it.title.toString() }).containsExactly("🍔 Fuel", "Ignore").inOrder()
+        assertThat(refreshed.actions.map { it.title.toString() }).containsExactly("Fuel", "Ignore").inOrder()
 
         handler.handle(NotificationCommand.Sort(id, fuel))
         notifier.onPendingAdded(id, IngestOrigin.REALTIME) // ignored: no longer pending

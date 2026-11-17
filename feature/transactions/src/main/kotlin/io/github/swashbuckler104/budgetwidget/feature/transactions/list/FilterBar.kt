@@ -114,7 +114,7 @@ internal fun FilterBar(
         FilterChip(
             selected = category != null,
             onClick = { pickingCategory = true },
-            label = { Text(category?.let { "${it.emoji} ${it.name}" } ?: stringResource(R.string.filter_category)) },
+            label = { Text(category?.name ?: stringResource(R.string.filter_category)) },
             trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, contentDescription = null) },
         )
         if (accounts.isNotEmpty()) {

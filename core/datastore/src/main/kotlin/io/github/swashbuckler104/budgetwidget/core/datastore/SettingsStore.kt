@@ -30,8 +30,14 @@ data class NudgeSettings(val enabled: Boolean = true, val minuteOfDay: Int = DEF
 /** App theme (SCOPE.md F9): follow the system, or force light or dark. */
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
-/** [dynamicColor]: wallpaper colors on Android 12+; the brand palette when off or unavailable. */
-data class AppearanceSettings(val theme: ThemeMode = ThemeMode.SYSTEM, val dynamicColor: Boolean = true)
+/** [dynamicColor]: wallpaper colors on Android 12+ (opt-in, ADR-0051); the brand palette otherwise. */
+data class AppearanceSettings(val theme: ThemeMode = ThemeMode.SYSTEM, val dynamicColor: Boolean = false)
+
+/**
+ * "Keep original SMS text" (ADR-0045, audit F3): how long the bank SMS stored with a sorted
+ * transaction is kept. [days] null keeps it forever.
+ */
+enum class SmsRetention(val days: Int?) { FOREVER(null), DAYS_90(90), DAYS_30(30) }
 
 /** User settings (SCOPE.md F9) plus one-time setup markers. */
 @Singleton
@@ -107,7 +113,7 @@ class SettingsStore @Inject constructor(@SettingsPreferences private val dataSto
     val appearance: Flow<AppearanceSettings> = dataStore.data.map { prefs ->
         AppearanceSettings(
             theme = prefs[THEME]?.let { name -> ThemeMode.entries.firstOrNull { it.name == name } } ?: ThemeMode.SYSTEM,
-            dynamicColor = prefs[DYNAMIC_COLOR] ?: true,
+            dynamicColor = prefs[DYNAMIC_COLOR] ?: false,
         )
     }
 
@@ -127,6 +133,16 @@ class SettingsStore @Inject constructor(@SettingsPreferences private val dataSto
 
     suspend fun setSecureScreen(enabled: Boolean) {
         dataStore.edit { it[SECURE_SCREEN] = enabled }
+    }
+
+    /** Kept on this phone only, not in backups, like [secureScreen]. Forever by default. */
+    val smsRetention: Flow<SmsRetention> = dataStore.data.map { prefs ->
+        prefs[SMS_RETENTION]?.let { name -> SmsRetention.entries.firstOrNull { it.name == name } }
+            ?: SmsRetention.FOREVER
+    }
+
+    suspend fun setSmsRetention(retention: SmsRetention) {
+        dataStore.edit { it[SMS_RETENTION] = retention.name }
     }
 
     /** Null until decided: then the app checks whether this is an upgrade with data already in it. */
@@ -184,6 +200,7 @@ class SettingsStore @Inject constructor(@SettingsPreferences private val dataSto
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         val SECURE_SCREEN = booleanPreferencesKey("secure_screen")
         val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
+        val SMS_RETENTION = stringPreferencesKey("sms_retention")
     }
 }
 

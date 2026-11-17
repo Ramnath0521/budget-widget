@@ -28,11 +28,11 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.decodeFromStream
-import kotlinx.serialization.json.encodeToStream
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 
 /** What [DataTransfer.restore] did. */
 sealed interface RestoreResult {
@@ -43,6 +43,12 @@ sealed interface RestoreResult {
 
     /** Written by a newer version of the app. Nothing was changed. */
     data class TooNew(val version: Int) : RestoreResult
+
+    /** A password-protected backup: call again with the password. Nothing was changed. */
+    data object NeedsPassphrase : RestoreResult
+
+    /** The password doesn't open it (or the file was changed). Nothing was changed. */
+    data object WrongPassphrase : RestoreResult
 }
 
 /**
@@ -63,9 +69,11 @@ class DataTransfer @Inject constructor(
 ) {
     private val mutex = Mutex()
 
-    /** Writes a full backup to [output] (not closed). [appVersion] is recorded for support. */
-    @OptIn(ExperimentalSerializationApi::class)
-    suspend fun backup(output: OutputStream, appVersion: String) = mutex.withLock {
+    /**
+     * Writes a full backup to [output] (not closed). [appVersion] is recorded for support. With a
+     * [passphrase] the file is encrypted (ADR-0044); the caller may clear the array afterwards.
+     */
+    suspend fun backup(output: OutputStream, appVersion: String, passphrase: CharArray? = null) = mutex.withLock {
         val file = db.withTransaction {
             val dao = db.backupDao()
             BackupFile(
@@ -81,17 +89,31 @@ class DataTransfer @Inject constructor(
                 settings = settings.snapshot().toBackup(),
             )
         }
-        withContext(Dispatchers.IO) { JSON.encodeToStream(file, output) }
+        val plain = JSON.encodeToString(file).toByteArray(Charsets.UTF_8)
+        // Key stretching is CPU work: off the main thread, and not on the IO pool.
+        val bytes = if (passphrase == null) {
+            plain
+        } else {
+            withContext(Dispatchers.Default) {
+                JSON.encodeToString(BackupCrypto.encrypt(plain, passphrase)).toByteArray(Charsets.UTF_8)
+            }
+        }
+        withContext(Dispatchers.IO) { output.write(bytes) }
     }
 
     /**
      * Replaces categories, accounts, transactions, rules, aliases, closed days and settings with
-     * [input]'s. The unparsed SMS list is local diagnostics and is cleared, not restored.
+     * [input]'s. The unparsed SMS list is local diagnostics and is cleared, not restored. A
+     * password-protected file needs [passphrase] ([RestoreResult.NeedsPassphrase] without one).
      */
-    @OptIn(ExperimentalSerializationApi::class)
-    suspend fun restore(input: InputStream): RestoreResult = mutex.withLock {
+    suspend fun restore(input: InputStream, passphrase: CharArray? = null): RestoreResult = mutex.withLock {
+        val raw = withContext(Dispatchers.IO) { input.readBytes() }
         val file = try {
-            withContext(Dispatchers.IO) { JSON.decodeFromStream<BackupFile>(input) }
+            val json = when (val opened = open(raw, passphrase)) {
+                is Opened.Plain -> opened.json
+                is Opened.Failed -> return@withLock opened.result
+            }
+            JSON.decodeFromString<BackupFile>(json)
         } catch (_: SerializationException) {
             // Not logged: the message may quote the file's contents (PRIVACY.md).
             return@withLock RestoreResult.NotABackup
@@ -120,6 +142,27 @@ class DataTransfer @Inject constructor(
             sync.reconcileNow()
         }
         RestoreResult.Restored(file.transactions.size, file.categories.size)
+    }
+
+    private sealed interface Opened {
+        class Plain(val json: String) : Opened
+
+        class Failed(val result: RestoreResult) : Opened
+    }
+
+    /** The backup JSON inside [raw]: as is, or decrypted when the file is password-protected. */
+    private suspend fun open(raw: ByteArray, passphrase: CharArray?): Opened {
+        val text = raw.toString(Charsets.UTF_8)
+        val format = (JSON.parseToJsonElement(text) as? JsonObject)?.get("format")
+        if ((format as? JsonPrimitive)?.contentOrNull != EncryptedBackup.FORMAT) return Opened.Plain(text)
+        val sealed = JSON.decodeFromString<EncryptedBackup>(text)
+        if (sealed.version > EncryptedBackup.VERSION) return Opened.Failed(RestoreResult.TooNew(sealed.version))
+        if (passphrase == null) return Opened.Failed(RestoreResult.NeedsPassphrase)
+        return when (val result = withContext(Dispatchers.Default) { BackupCrypto.decrypt(sealed, passphrase) }) {
+            is Decrypted.Ok -> Opened.Plain(result.plain.toString(Charsets.UTF_8).also { result.plain.fill(0) })
+            Decrypted.WrongPassphrase -> Opened.Failed(RestoreResult.WrongPassphrase)
+            Decrypted.Unsupported -> Opened.Failed(RestoreResult.NotABackup)
+        }
     }
 
     private suspend fun replaceAll(file: BackupFile) {

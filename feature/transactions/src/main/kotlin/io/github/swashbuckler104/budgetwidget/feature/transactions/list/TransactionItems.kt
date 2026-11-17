@@ -19,8 +19,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Undo
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.DoNotDisturbOn
+import androidx.compose.material.icons.rounded.NorthEast
 import androidx.compose.material.icons.rounded.Payments
 import androidx.compose.material.icons.rounded.Sell
+import androidx.compose.material.icons.rounded.SouthWest
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -56,6 +58,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.swashbuckler104.budgetwidget.core.designsystem.component.CategoryAvatar
 import io.github.swashbuckler104.budgetwidget.core.designsystem.component.MoneyText
+import io.github.swashbuckler104.budgetwidget.core.designsystem.theme.BudgetTheme
 import io.github.swashbuckler104.budgetwidget.core.model.Category
 import io.github.swashbuckler104.budgetwidget.core.model.Direction
 import io.github.swashbuckler104.budgetwidget.core.model.Transaction
@@ -213,6 +216,7 @@ internal fun InboxCard(
                 MaterialTheme.colorScheme.surfaceContainerLow
             },
         ),
+        border = BudgetTheme.cardBorder,
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
@@ -225,37 +229,46 @@ internal fun InboxCard(
             )
             .semantics { this.selected = selected },
     ) {
-        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (selected) {
-                    Icon(Icons.Rounded.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.width(8.dp))
-                }
-                Text(
-                    merchantName(t),
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
-                MoneyText(
-                    t.amountPaise,
-                    t.direction,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-            }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    listOfNotNull(accountLabel(t), time).joinToString(" · "),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
-                if (entry.overdue) Tag(stringResource(R.string.transactions_overdue), MaterialTheme.colorScheme.error)
-                if (t.isBackfill) {
-                    Tag(stringResource(R.string.transactions_backfill), MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                DirectionBadge(t.direction, selected)
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            merchantName(t),
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
+                        )
+                        MoneyText(
+                            t.amountPaise,
+                            t.direction,
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            listOfNotNull(accountLabel(t), time).joinToString(" · "),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                        if (entry.overdue) {
+                            Tag(stringResource(R.string.transactions_overdue), MaterialTheme.colorScheme.error)
+                        }
+                        if (t.isBackfill) {
+                            Tag(
+                                stringResource(R.string.transactions_backfill),
+                                MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
                 }
             }
             val original = entry.duplicateOf
@@ -264,6 +277,26 @@ internal fun InboxCard(
             }
         }
     }
+}
+
+/** Which way the money went, as a tinted disc (the sign on the amount says it in text). */
+@Composable
+private fun DirectionBadge(direction: Direction?, selected: Boolean) {
+    val money = BudgetTheme.money
+    val quiet = MaterialTheme.colorScheme.surfaceContainerHighest
+    val (fill, tint, icon) = when {
+        selected -> Triple(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary, Icons.Rounded.Check)
+        direction == Direction.IN -> Triple(quiet, money.income, Icons.Rounded.SouthWest)
+        direction == Direction.OUT -> Triple(quiet, money.spend, Icons.Rounded.NorthEast)
+        else -> Triple(quiet, MaterialTheme.colorScheme.onSurfaceVariant, Icons.Rounded.Sell)
+    }
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(fill),
+    ) { Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp)) }
 }
 
 @Composable

@@ -23,10 +23,13 @@ internal object FinancialSmsHeuristic {
     fun looksLikeTransactionBody(body: String): Boolean = AMOUNT.containsMatchIn(body) &&
         MOVEMENT.containsMatchIn(body) &&
         ACCOUNT.containsMatchIn(body) &&
-        !SECRET.containsMatchIn(body) &&
+        !hasSecret(body) &&
         !NOT_A_TRANSACTION.containsMatchIn(body) &&
         // The lender's or card's side of a payment the bank debit already shows (ADR-0042).
         !FlowRules.isPaymentConfirmation(body)
+
+    /** A one-time password, PIN, card code or password: such a message is never kept or shared. */
+    fun hasSecret(body: String): Boolean = SECRET.containsMatchIn(body)
 
     /** TRAI headers: `XX-NAME`, optionally with an `-S`/`-T`/`-G`/`-P` suffix; or a bare 6-letter name. */
     private val BUSINESS_HEADER = Regex("""^([A-Z]{2}-[A-Z0-9]{3,9}(-[A-Z])?|[A-Z]{6})$""", RegexOption.IGNORE_CASE)
@@ -54,9 +57,9 @@ internal object FinancialSmsHeuristic {
         RegexOption.IGNORE_CASE,
     )
 
-    /** One-time passwords (also glued to digits: "OTP482913"), PINs and card codes. */
+    /** One-time passwords (also glued to digits: "OTP482913"), PINs, passwords and card codes. */
     private val SECRET = Regex(
-        """\b(otp|one[ -]time password|verification code|passcode|cvv|m?pin)\b|\botp\d""",
+        """\b(otp|one[ -]time password|verification code|passcode|password|cvv|m?pin)\b|\botp\d""",
         RegexOption.IGNORE_CASE,
     )
 }

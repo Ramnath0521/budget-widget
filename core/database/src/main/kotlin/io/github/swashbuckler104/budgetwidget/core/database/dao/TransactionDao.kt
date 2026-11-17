@@ -69,6 +69,18 @@ interface TransactionDao {
     suspend fun count(): Int
 
     /**
+     * Forgets the stored SMS text of sorted transactions that happened before [beforeMillis] (epoch
+     * ms, UTC; ADR-0045). Transactions still waiting in the inbox keep theirs.
+     */
+    @Query(
+        """
+        UPDATE transactions SET smsBody = NULL
+        WHERE smsBody IS NOT NULL AND status != 'PENDING' AND occurredAt < :beforeMillis
+        """,
+    )
+    suspend fun dropSmsBodiesBefore(beforeMillis: Long): Int
+
+    /**
      * Emits after every write to the table (Room re-runs the query on each invalidation, even if
      * the count is unchanged): a cheap change signal that doesn't load any rows.
      */

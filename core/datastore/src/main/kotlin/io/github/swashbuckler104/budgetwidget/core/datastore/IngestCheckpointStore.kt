@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.first
@@ -56,6 +57,23 @@ class IngestCheckpointStore @Inject constructor(@IngestPreferences private val d
     /** Unparsed SMS received at or before this time (epoch ms) were deleted by the user; never re-add them. */
     suspend fun unparsedDismissedUpTo(): Long? = dataStore.data.map { it[DISMISSED] }.first()
 
+    /**
+     * Body hashes of unparsed SMS the user deleted, oldest first, at most [MAX_DISMISSED_HASHES].
+     * Unlike the time mark, they match whatever time a later read gives the message (ADR-0049).
+     */
+    suspend fun dismissedUnparsedHashes(): Set<String> =
+        dataStore.data.map { decode(it[DISMISSED_HASHES]) }.first().toSet()
+
+    suspend fun dismissUnparsedHashes(hashes: Collection<String>) {
+        if (hashes.isEmpty()) return
+        dataStore.edit { prefs ->
+            val kept = decode(prefs[DISMISSED_HASHES]).filterNot { it in hashes } + hashes.distinct()
+            prefs[DISMISSED_HASHES] = kept.takeLast(MAX_DISMISSED_HASHES).joinToString(SEPARATOR)
+        }
+    }
+
+    private fun decode(value: String?): List<String> = value?.split(SEPARATOR)?.filter { it.isNotEmpty() }.orEmpty()
+
     /** Moves the dismissal mark forward to [epochMillis]; an older value is ignored. */
     suspend fun dismissUnparsedUpTo(epochMillis: Long) {
         dataStore.edit { prefs ->
@@ -66,6 +84,11 @@ class IngestCheckpointStore @Inject constructor(@IngestPreferences private val d
 
     private companion object {
         val DISMISSED = longPreferencesKey("unparsed_dismissed_up_to_ms")
+        val DISMISSED_HASHES = stringPreferencesKey("unparsed_dismissed_hashes")
+        const val SEPARATOR = ","
+
+        /** Room for every list entry (200) deleted a few times over; SHA-256 hex, about 32 KB. */
+        const val MAX_DISMISSED_HASHES = 500
         val KEY = longPreferencesKey("reconcile_checkpoint_ms")
         val FLOOR = longPreferencesKey("reconcile_floor_ms")
     }

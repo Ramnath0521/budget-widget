@@ -37,6 +37,7 @@ import io.github.swashbuckler104.budgetwidget.feature.settings.AccountsRoute
 import io.github.swashbuckler104.budgetwidget.feature.settings.ParserFeedbackRoute
 import io.github.swashbuckler104.budgetwidget.feature.settings.SettingsRoute
 import io.github.swashbuckler104.budgetwidget.feature.settings.UnparsedRoute
+import io.github.swashbuckler104.budgetwidget.feature.transactions.edit.AddFromSmsSheet
 import io.github.swashbuckler104.budgetwidget.feature.transactions.list.TransactionsRoute
 import kotlin.reflect.KClass
 import kotlinx.serialization.Serializable
@@ -78,14 +79,15 @@ data class DrillDownDestination(
     val direction: String = "",
 )
 
+/** In bar order: the list you land on, then Analysis in the middle (owner's choice, 1.0.3). */
 private enum class Tab(val route: Any, val routeClass: KClass<*>, @StringRes val label: Int, val icon: ImageVector) {
-    ANALYSIS(AnalysisDestination, AnalysisDestination::class, R.string.tab_analysis, Icons.Rounded.Insights),
     TRANSACTIONS(
         TransactionsDestination,
         TransactionsDestination::class,
         R.string.tab_transactions,
         Icons.AutoMirrored.Rounded.ReceiptLong,
     ),
+    ANALYSIS(AnalysisDestination, AnalysisDestination::class, R.string.tab_analysis, Icons.Rounded.Insights),
     CATEGORIES(CategoriesDestination, CategoriesDestination::class, R.string.tab_categories, Icons.Rounded.Category),
 }
 
@@ -196,7 +198,12 @@ fun BudgetWidgetNavHost(
                 )
             }
             composable<AccountsDestination> { AccountsRoute(onBack = { navController.popBackStack() }) }
-            composable<UnparsedDestination> { UnparsedRoute(onBack = { navController.popBackStack() }) }
+            composable<UnparsedDestination> {
+                UnparsedRoute(
+                    onBack = { navController.popBackStack() },
+                    addSheet = { id, onDone -> AddFromSmsSheet(id, onDone) },
+                )
+            }
             composable<ParserFeedbackDestination> { ParserFeedbackRoute(onBack = { navController.popBackStack() }) }
             composable<AboutDestination> { AboutRoute(onBack = { navController.popBackStack() }) }
         }

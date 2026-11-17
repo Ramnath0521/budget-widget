@@ -11,15 +11,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -31,17 +34,24 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -95,11 +105,12 @@ class ParserFeedbackViewModel @Inject constructor(
     /** true: the file was saved; false: it could not be written. */
     val saved: Flow<Boolean> = savedChannel.receiveAsFlow()
 
-    fun scan() {
+    /** [keepAmounts]: share real transaction amounts; everything else stays masked (ADR-0046). */
+    fun scan(keepAmounts: Boolean = false) {
         if (mutableState.value == FeedbackState.Scanning) return
         mutableState.value = FeedbackState.Scanning
         viewModelScope.launch {
-            val found = scanner.scan(ParserFeedbackScanner.DAYS, clock.nowMillis())
+            val found = scanner.scan(ParserFeedbackScanner.DAYS, clock.nowMillis(), keepAmounts)
             mutableState.value = found?.let { FeedbackState.Ready(it) } ?: FeedbackState.NoPermission
         }
     }
@@ -108,11 +119,20 @@ class ParserFeedbackViewModel @Inject constructor(
         if (s is FeedbackState.Ready) s.copy(messages = s.messages.filterIndexed { i, _ -> i != index }) else s
     }
 
-    fun report(appVersion: String): String =
-        ParserFeedbackReport.text((state.value as? FeedbackState.Ready)?.messages.orEmpty(), appVersion)
+    /** "Remove all from <sender>". */
+    fun removeSender(sender: String) = mutableState.update { s ->
+        if (s is FeedbackState.Ready) s.copy(messages = s.messages.filterNot { it.sender == sender }) else s
+    }
+
+    private fun messages() = (state.value as? FeedbackState.Ready)?.messages.orEmpty()
+
+    /** The email body: a line for people, then the same JSON Lines as the file (ADR-0047). */
+    fun emailBody(appVersion: String): String = ParserFeedbackReport.emailBody(messages(), appVersion)
+
+    fun fileContent(appVersion: String): String = ParserFeedbackReport.jsonLines(messages(), appVersion)
 
     fun save(uri: Uri, appVersion: String) {
-        val text = report(appVersion)
+        val text = fileContent(appVersion)
         viewModelScope.launch {
             val ok = try {
                 withContext(Dispatchers.IO) {
@@ -147,7 +167,7 @@ fun ParserFeedbackRoute(
     val noMailText = stringResource(R.string.feedback_no_mail_app)
     val address = stringResource(R.string.feedback_email_address)
     val subject = stringResource(R.string.feedback_email_subject)
-    val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
+    val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(MIME_JSON_LINES)) { uri ->
         uri?.let { viewModel.save(it, appVersion) }
     }
     LaunchedEffect(viewModel) {
@@ -157,14 +177,14 @@ fun ParserFeedbackRoute(
         state = state,
         snackbar = snackbar,
         onBack = onBack,
-        onScan = viewModel::scan,
+        onScan = { viewModel.scan(it) },
         onRemove = viewModel::remove,
         onEmail = {
             // The user's own mail app sends it: the app has no internet permission (ADR-0043).
             val mail = Intent(Intent.ACTION_SEND).apply {
                 putExtra(Intent.EXTRA_EMAIL, arrayOf(address))
                 putExtra(Intent.EXTRA_SUBJECT, subject)
-                putExtra(Intent.EXTRA_TEXT, viewModel.report(appVersion))
+                putExtra(Intent.EXTRA_TEXT, viewModel.emailBody(appVersion))
                 // Only apps that handle mailto: (mail apps) are offered, not every share target.
                 selector = Intent(Intent.ACTION_SENDTO, "mailto:".toUri())
             }
@@ -174,7 +194,8 @@ fun ParserFeedbackRoute(
                 scope.launch { snackbar.showSnackbar(noMailText) }
             }
         },
-        onSave = { save.launch("budget-widget-parser-feedback.txt") },
+        onRemoveSender = viewModel::removeSender,
+        onSave = { save.launch("budget-widget-parser-feedback.jsonl") },
         modifier = modifier,
     )
 }
@@ -185,11 +206,12 @@ internal fun ParserFeedbackScreen(
     state: FeedbackState,
     snackbar: SnackbarHostState,
     onBack: () -> Unit,
-    onScan: () -> Unit,
+    onScan: (keepAmounts: Boolean) -> Unit,
     onRemove: (Int) -> Unit,
     onEmail: () -> Unit,
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
+    onRemoveSender: (String) -> Unit = {},
 ) {
     val messages = (state as? FeedbackState.Ready)?.messages.orEmpty()
     Scaffold(
@@ -230,20 +252,39 @@ internal fun ParserFeedbackScreen(
                 .padding(horizontal = 16.dp),
         ) {
             item { FeedbackHeader(state, messages.size, onScan) }
+            val senders = messages.groupingBy { it.sender }.eachCount()
+            if (senders.size > 1 || senders.values.any { it > 1 }) {
+                item { SenderSummary(senders, onRemoveSender) }
+            }
             itemsIndexed(messages) { index, message -> FeedbackCard(message) { onRemove(index) } }
         }
     }
 }
 
 @Composable
-private fun FeedbackHeader(state: FeedbackState, count: Int, onScan: () -> Unit) {
+private fun FeedbackHeader(state: FeedbackState, count: Int, onScan: (keepAmounts: Boolean) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(vertical = 8.dp)) {
         val body = MaterialTheme.typography.bodyMedium
         val muted = MaterialTheme.colorScheme.onSurfaceVariant
         when (state) {
             FeedbackState.Intro -> {
                 Text(stringResource(R.string.feedback_intro), style = body)
-                Button(onClick = onScan) { Text(stringResource(R.string.feedback_scan)) }
+                var keepAmounts by rememberSaveable { mutableStateOf(false) }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .toggleable(value = keepAmounts, role = Role.Checkbox) { keepAmounts = it },
+                ) {
+                    Checkbox(checked = keepAmounts, onCheckedChange = null)
+                    Column {
+                        Text(stringResource(R.string.feedback_keep_amounts), style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.feedback_keep_amounts_summary), style = body, color = muted)
+                    }
+                }
+                Button(onClick = { onScan(keepAmounts) }) { Text(stringResource(R.string.feedback_scan)) }
             }
 
             FeedbackState.Scanning -> Row(
@@ -264,6 +305,34 @@ private fun FeedbackHeader(state: FeedbackState, count: Int, onScan: () -> Unit)
                     style = MaterialTheme.typography.titleSmall,
                 )
                 Text(stringResource(R.string.feedback_preview_hint), style = body, color = muted)
+            }
+        }
+    }
+}
+
+/** One row per sender with "Remove all", so a whole bank's messages go in one tap. */
+@Composable
+private fun SenderSummary(senders: Map<String, Int>, onRemoveSender: (String) -> Unit) {
+    Column(modifier = Modifier.padding(bottom = 4.dp)) {
+        Text(
+            stringResource(R.string.feedback_by_sender),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        senders.forEach { (sender, count) ->
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    pluralStringResource(R.plurals.feedback_sender_count, count, sender, count),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                val description = stringResource(R.string.feedback_remove_all_from, sender)
+                TextButton(
+                    onClick = { onRemoveSender(sender) },
+                    modifier = Modifier.semantics { contentDescription = description },
+                ) {
+                    Text(stringResource(R.string.feedback_remove_all))
+                }
             }
         }
     }
@@ -297,3 +366,6 @@ private fun FeedbackCard(message: FeedbackMessage, onRemove: () -> Unit) {
         }
     }
 }
+
+/** JSON Lines has no registered type; octet-stream keeps pickers from renaming the file. */
+private const val MIME_JSON_LINES = "application/octet-stream"

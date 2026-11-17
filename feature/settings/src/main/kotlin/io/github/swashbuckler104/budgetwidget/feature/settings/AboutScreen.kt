@@ -33,6 +33,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import io.github.swashbuckler104.budgetwidget.core.designsystem.theme.BudgetTheme
 
 /** About (SCOPE.md F9): version, license, credits, privacy statement and the no-internet badge. */
 @Composable
@@ -86,18 +87,20 @@ internal fun AboutScreen(
             }
             if (offline) OfflineBadge()
             Block(stringResource(R.string.settings_privacy_title), stringResource(R.string.settings_privacy_body))
-            Block(stringResource(R.string.settings_license_title), stringResource(R.string.settings_license_body))
-            LinkRow(
-                title = stringResource(R.string.settings_source),
-                summary = SOURCE_URL,
-                onClick = onOpenSource,
-            )
-            Block(stringResource(R.string.settings_credits_title), stringResource(R.string.settings_credits_body))
-            LinkRow(
-                title = stringResource(R.string.settings_parser_link),
-                summary = PARSER_URL,
-                onClick = onOpenParser,
-            )
+            Block(stringResource(R.string.settings_license_title), stringResource(R.string.settings_license_body)) {
+                LinkRow(
+                    title = stringResource(R.string.settings_source),
+                    summary = SOURCE_URL,
+                    onClick = onOpenSource,
+                )
+            }
+            Block(stringResource(R.string.settings_credits_title), stringResource(R.string.settings_credits_body)) {
+                LinkRow(
+                    title = stringResource(R.string.settings_parser_link),
+                    summary = PARSER_URL,
+                    onClick = onOpenParser,
+                )
+            }
         }
     }
 }
@@ -122,11 +125,33 @@ private fun OfflineBadge() {
     }
 }
 
+/** One topic on a card: its title, the text, and optionally a link row beneath. */
 @Composable
-private fun Block(title: String, body: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
-        Text(body, style = MaterialTheme.typography.bodyMedium)
+private fun Block(title: String, body: String, link: @Composable (() -> Unit)? = null) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        border = BudgetTheme.cardBorder,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.padding(
+                start = 16.dp,
+                end = 16.dp,
+                top = 16.dp,
+                bottom = if (link ==
+                    null
+                ) {
+                    16.dp
+                } else {
+                    4.dp
+                },
+            ),
+        ) {
+            Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+            Text(body, style = MaterialTheme.typography.bodyMedium)
+        }
+        link?.invoke()
     }
 }
 

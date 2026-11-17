@@ -66,6 +66,11 @@ categories and a budget in progress.
 | 12 | E7 supply chain (verification metadata, provenance) | S | pairs with D reproducible build |
 | - | B5 "Teach this message" | - | assessed, deferred (see B5) |
 
+**Release split (owner, 2026-11-16).** 1.0.3 ships E5-E7, C2-C3, B5 lite and the design rework
+(ADR-0051 to ADR-0054). Moved to **2.0.0 "Play Store ready"**: all of D, and the first round of
+parser fixes from the owner's real unparsed messages (B4 loop run on their C3 report), which waits
+until they have collected enough of them.
+
 ---
 
 ## A. UI fixes
@@ -295,7 +300,7 @@ inbox count; compare with the `expect-*` values.
   run or an `@` (a redaction miss).
 - Link from `CONTRIBUTING.md` and `docs/PARSER_UPGRADE.md`.
 
-### B5. "Teach this message" (assessed, deferred)
+### B5. "Teach this message" (assessed, deferred; the small version shipped in 1.0.3, ADR-0048)
 
 **Not in 1.0.2; revisit for 1.0.3 or later.**
 
@@ -317,7 +322,7 @@ banks outside the 7.
 look financial but did not parse, remove any, and send them by email or save a file. Nothing is
 written to budget data, nothing is sent automatically.
 
-### [ ] C1. Scanner (no writes, by construction)
+### [x] C1. Scanner (no writes, by construction) (1.0.2, ADR-0043)
 
 - `ParserFeedbackScanner` in `:ingest`; constructor takes only `SmsInboxSource`, `SmsParser`
   (the layered one) and `SmsRedactor`. It has **no** DAO, repository, notifier or WorkManager
@@ -332,7 +337,7 @@ written to budget data, nothing is sent automatically.
 
 Simpler than the "separate table" option and leaves nothing behind to clean up.
 
-### [ ] C2. Redactor (allowlist, shape-preserving)
+### [x] C2. Redactor (allowlist, shape-preserving) (1.0.3, ADR-0046)
 
 `SmsRedactor` in `:ingest` (pure Kotlin, tests first). A blocklist of patterns will miss names;
 use an **allowlist**:
@@ -353,7 +358,7 @@ Tests: each rule; a property test that no output contains a 6+ digit run other t
 or a token outside the vocabulary; the whole golden corpus round-trips to something that still
 has the same amount/keyword positions.
 
-### [ ] C3. Preview and share UI
+### [x] C3. Preview and share UI (1.0.2 and 1.0.3, ADR-0043, ADR-0047: text in the email body, no FileProvider)
 
 - Settings -> "Help improve the parser". Intro screen: what is scanned, what is removed, that
   nothing is sent until they press Send, link to the privacy text. Button "Scan last 90 days".
@@ -374,7 +379,7 @@ has the same amount/keyword positions.
 - Update SECURITY_AUDIT section 3 (first provider of ours) and add the provider to a CI check:
   exactly one provider of ours, not exported, only that cache path.
 
-### [ ] C4. Docs
+### [x] C4. Docs (PRIVACY.md and the in-app intro; Play listing text comes with D2)
 
 `PRIVACY.md`: new section (opt-in, one-time, runs only when started, what is removed, user
 reviews and sends with their own mail app, the app still has no internet permission). Mirror the
@@ -393,7 +398,7 @@ content matches the preview. `sqlite3` counts before and after are equal.
 
 ---
 
-## D. Distribution
+## D. Distribution (2.0.0)
 
 Facts checked on 2026-11-15 (re-check before submitting; items marked *verify* came from
 secondary sources):
@@ -556,7 +561,7 @@ dex references `Ljava/net/Socket`, `Ljava/net/HttpURLConnection`, `Ljava/net/URL
 `Landroid/webkit/` or `Ldalvik/system/*ClassLoader` (today: zero hits). Run in `ci.yml` and
 `release.yml`.
 
-### [ ] E5. Password-protected backup [F2]
+### [x] E5. Password-protected backup [F2] (1.0.3, ADR-0044)
 
 **1.0.2:** only a warning dialog before CSV export and backup (plaintext, choose a private folder).
 Encryption itself moved to **1.0.3**.
@@ -568,13 +573,13 @@ AES-256-GCM, `javax.crypto` only. File = small JSON header (`format`, `kdf`, `it
 is a clean error. CSV export stays plaintext with a warning line. Tests: round trip, wrong
 passphrase, truncated file, old plaintext backup still restores.
 
-### [ ] E6. SMS body retention [F3]
+### [x] E6. SMS body retention [F3] (1.0.3, ADR-0045)
 
 Setting "Keep original SMS text": Forever (default) / 90 days / 30 days. The reconcile worker
 nulls `smsBody` on sorted transactions older than the limit. No SQLCipher (reasoning in
 SECURITY_AUDIT section 4).
 
-### [ ] E7. Supply chain [F4, F5]
+### [x] E7. Supply chain [F4, F5] (1.0.3, ADR-0050)
 
 `gradle/verification-metadata.xml` with sha256 for all configurations, refresh steps in
 `CONTRIBUTING.md`. `actions/attest-build-provenance` on the release job (`id-token: write`,

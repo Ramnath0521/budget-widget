@@ -1,17 +1,32 @@
 package io.github.swashbuckler104.budgetwidget.feature.settings
 
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.filterToOne
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTextClearance
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
+import io.github.swashbuckler104.budgetwidget.core.datastore.SmsRetention
 import io.github.swashbuckler104.budgetwidget.core.datastore.ThemeMode
 import io.github.swashbuckler104.budgetwidget.core.model.Account
 import io.github.swashbuckler104.budgetwidget.core.model.AccountKind
@@ -41,9 +56,11 @@ class SettingsScreensTest {
                 setNudgeTime = { _, _ -> },
                 allowNotifications = {},
                 setTheme = { calls += "theme:$it" },
+                setSmsRetention = { calls += "keep:$it" },
                 importOlder = { calls += "import:$it" },
                 startFresh = { calls += "fresh" },
                 restore = { calls += "restore" },
+                backup = { calls += "backup:$it" },
                 openSmsIssues = { calls += "unparsed" },
             ),
         )
@@ -77,6 +94,70 @@ class SettingsScreensTest {
         assertThat(
             calls,
         ).containsExactly("theme:${ThemeMode.DARK}", "import:90", "unparsed", "fresh", "restore").inOrder()
+    }
+
+    @Test
+    fun `keep original SMS text explains what goes before offering the limits`() {
+        showSettings()
+        scrollTo("Keep original SMS text")
+        compose.onNodeWithText("Forever").performClick()
+        compose.onNodeWithText("Amount, merchant, account and category stay", substring = true).assertExists()
+        compose.onNodeWithText("30 days").performClick()
+        compose.onNodeWithText("90 days").assertDoesNotExist()
+        assertThat(calls).containsExactly("keep:${SmsRetention.DAYS_30}")
+    }
+
+    @Test
+    fun `a backup password must be long enough and typed twice`() {
+        showSettings()
+        scrollTo("Back up")
+        compose.onNodeWithText("Back up").performClick()
+        compose.onNodeWithText("Protect with a password").performClick()
+        val save = compose.onNodeWithText("Choose where to save")
+        save.assertIsNotEnabled()
+        compose.onNodeWithText("Password").performTextInput("short")
+        compose.onNodeWithText("At least 8 characters").assertExists()
+        compose.onNodeWithText("Password").performTextInput("-but-now-long")
+        compose.onNodeWithText("Repeat password").performTextInput("short-but-now-lonG")
+        compose.onNodeWithText("Passwords don't match").assertExists()
+        save.assertIsNotEnabled()
+        compose.onNodeWithText("Repeat password").performTextClearance()
+        compose.onNodeWithText("Repeat password").performTextInput("short-but-now-long")
+        save.assertIsEnabled().performClick()
+
+        // Without the box ticked it is a plain backup.
+        scrollTo("Back up")
+        compose.onNodeWithText("Back up").performClick()
+        compose.onNodeWithText("Choose where to save").performClick()
+        assertThat(calls).containsExactly("backup:short-but-now-long", "backup:null").inOrder()
+    }
+
+    @Test
+    fun `the restore password prompt shows a wrong password and passes the next try`() {
+        var tried: String? = null
+        var state by mutableStateOf(SettingsUiState(loaded = true, restorePrompt = RestorePrompt()))
+        compose.setContent {
+            SettingsScreen(
+                state = state,
+                notificationsBlocked = false,
+                actions = SettingsActions(
+                    onBack = {},
+                    setNotificationsEnabled = {},
+                    setMinAmount = {},
+                    setAutoSort = {},
+                    setNudgeEnabled = {},
+                    setNudgeTime = { _, _ -> },
+                    allowNotifications = {},
+                    restoreWithPassphrase = { tried = it },
+                ),
+            )
+        }
+        compose.onNodeWithText("Wrong password, or the file was changed").assertDoesNotExist()
+        compose.onNodeWithText("Password").performTextInput("guess")
+        compose.onAllNodesWithText("Restore").filterToOne(hasAnyAncestor(isDialog())).performClick()
+        assertThat(tried).isEqualTo("guess")
+        state = state.copy(restorePrompt = RestorePrompt(wrong = true))
+        compose.onNodeWithText("Wrong password, or the file was changed").assertExists()
     }
 
     @Test
@@ -116,6 +197,33 @@ class SettingsScreensTest {
         compose.onNodeWithContentDescription("Delete all").performClick()
         compose.onNodeWithText("Delete").performClick()
         assertThat(calls).containsExactly("delete:3", "all").inOrder()
+    }
+
+    @Test
+    fun `add as transaction opens the sheet for that message and says when it was added`() {
+        val sms = UnparsedSms(3, "VM-NEWBNK-S", "Rs 10 credited to A/c XX1", 0, UnparsedReason.UNKNOWN_SENDER)
+        val noBody = UnparsedSms(4, "VM-OLDBNK-S", null, 0, UnparsedReason.NO_MATCH)
+        compose.setContent {
+            UnparsedScreen(
+                items = listOf(sms, noBody),
+                onBack = {},
+                onDelete = {},
+                onDeleteAll = {},
+                addSheet = { id, onDone ->
+                    calls += "sheet:$id"
+                    TextButton(onClick = { onDone(true) }) {
+                        Text("fake save")
+                    }
+                },
+            )
+        }
+        // Only a message with text can be added.
+        compose.onAllNodesWithText("Add as transaction").assertCountEquals(1)
+        compose.onNodeWithText("Add as transaction").performClick()
+        compose.onNodeWithText("fake save").performClick()
+        compose.onNodeWithText("Added to transactions").assertExists()
+        compose.onNodeWithText("fake save").assertDoesNotExist()
+        assertThat(calls.distinct()).containsExactly("sheet:3")
     }
 
     @Test

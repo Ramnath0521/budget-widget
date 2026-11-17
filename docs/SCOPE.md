@@ -163,7 +163,7 @@ Built with **Jetpack Glance** (`GlanceAppWidget`, `GlanceTheme` with dynamic col
 - Re-run backfill (choose range).
 - **Unparsed bank SMS** list (copy text to report a parser bug upstream; delete).
 - **Export CSV** and **Backup / Restore** (JSON, via Storage Access Framework — no network). Backup includes categories, rules, transactions, settings; versioned schema.
-- Theme (System / Light / Dark), dynamic color on/off.
+- Theme (System / Light / Dark), dynamic color on/off (off by default, ADR-0051).
 - About: version, license (AGPL-3.0), open-source credits (PennyWise parser-core), privacy statement, "No internet permission" badge.
 
 ### Seed categories (editable)

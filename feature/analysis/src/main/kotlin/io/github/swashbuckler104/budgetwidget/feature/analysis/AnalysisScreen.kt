@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -34,6 +35,7 @@ import androidx.compose.material.icons.rounded.EditCalendar
 import androidx.compose.material.icons.rounded.Insights
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePickerDialog
@@ -471,12 +473,25 @@ private fun AccountFilter(accounts: List<Account>, selected: Long?, onSelect: (L
 private fun StatusRow(streak: Int, pending: Int, onSortInbox: () -> Unit) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
         if (streak > 0) {
-            AssistChip(onClick = {}, label = { Text(pluralStringResource(R.plurals.analysis_streak, streak, streak)) })
+            AssistChip(
+                onClick = {},
+                label = { Text(pluralStringResource(R.plurals.analysis_streak, streak, streak)) },
+                colors = AssistChipDefaults.assistChipColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    labelColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                ),
+                border = null,
+            )
         }
         if (pending > 0) {
             AssistChip(
                 onClick = onSortInbox,
                 label = { Text(pluralStringResource(R.plurals.analysis_inbox_banner, pending, pending)) },
+                colors = AssistChipDefaults.assistChipColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    labelColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                ),
+                border = null,
             )
         }
     }
@@ -490,9 +505,16 @@ private fun Summary(analysis: PeriodAnalysis, current: Boolean) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = HERO_EDGE_ALPHA)),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(BudgetTheme.heroBrush)
+                    .padding(20.dp),
+            ) {
                 Text(
                     stringResource(R.string.analysis_spent),
                     style = MaterialTheme.typography.labelLarge,
@@ -515,10 +537,10 @@ private fun Summary(analysis: PeriodAnalysis, current: Boolean) {
                         text,
                         style = MaterialTheme.typography.bodyMedium,
                         // Spending more is red, spending less green (ADR-0040).
-                        color = if (more) money.onSpendContainer else money.onIncomeContainer,
+                        color = if (more) money.spend else money.income,
                         modifier = Modifier
                             .clip(MaterialTheme.shapes.small)
-                            .background(if (more) money.spendContainer else money.incomeContainer)
+                            .background(MaterialTheme.colorScheme.surface.copy(alpha = HERO_PILL_ALPHA))
                             .padding(horizontal = 8.dp, vertical = 2.dp),
                     )
                 }
@@ -584,7 +606,7 @@ private fun CategoriesCard(analysis: PeriodAnalysis, accountId: Long?, actions: 
         val description = slices.joinToString(", ") { "${nameOf(it, toSortName)} ${formatInr(it.totalPaise)}" }
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth()) {
             DonutChart(
-                slices = slices.map { DonutSlice(it.totalPaise, colorOf(it, toSortColor)) },
+                slices = slices.map { DonutSlice(it.totalPaise, BudgetTheme.chartColor(colorOf(it, toSortColor))) },
                 selected = pick,
                 onSelect = select,
                 description = stringResource(
@@ -728,7 +750,7 @@ private fun SpendRow(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 ProportionBar(
                     fraction = fraction,
-                    color = color,
+                    color = BudgetTheme.chartColor(color),
                     trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                     modifier = Modifier
                         .weight(1f)
@@ -858,6 +880,7 @@ private fun MerchantsCard(merchants: List<MerchantSpend>, spentPaise: Long, acti
 private fun ChartCard(title: String, content: @Composable () -> Unit) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        border = BudgetTheme.cardBorder,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -991,6 +1014,8 @@ private const val TO_SORT_EMOJI = "📥"
 private const val TO_SORT_ID = -1L
 private const val LARGE_FONT = 1.3f
 private const val STATS = 3
+private const val HERO_EDGE_ALPHA = 0.35f
+private const val HERO_PILL_ALPHA = 0.6f
 private const val DONUT_WIDTH = 0.62f
 private const val CENTER_TEXT_WIDTH = 0.4f
 private const val PERCENT = 100

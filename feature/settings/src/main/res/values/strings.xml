@@ -30,7 +30,7 @@
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_dynamic_color">Wallpaper colors</string>
-    <string name="settings_dynamic_color_summary">Use colors from your wallpaper instead of the app\'s teal</string>
+    <string name="settings_dynamic_color_summary">Use colors from your wallpaper instead of the app\'s own palette</string>
 
     <string name="settings_section_sms">Bank SMS</string>
     <string name="settings_import_older">Import older SMS</string>
@@ -42,10 +42,17 @@
     <string name="settings_section_privacy">Privacy</string>
     <string name="settings_secure_screen">Hide amounts in screenshots &amp; recents</string>
     <string name="settings_secure_screen_summary">Recent apps shows a blank card, and screenshots and screen sharing of the app are blocked</string>
+    <string name="settings_sms_retention">Keep original SMS text</string>
+    <string name="settings_sms_retention_body">For sorted transactions older than this, the bank SMS is deleted from the app. Amount, merchant, account and category stay. Older unparsed bank SMS are removed too. Transactions still in the inbox keep their SMS, and your SMS app is never touched.</string>
+    <string name="settings_sms_retention_forever">Forever</string>
+    <string name="settings_sms_retention_90">90 days</string>
+    <string name="settings_sms_retention_30">30 days</string>
     <string name="settings_feedback">Help improve the parser</string>
     <string name="settings_feedback_summary">Scan the last 90 days for bank SMS that weren\'t read and send them to the developer. Your budget isn\'t changed.</string>
     <string name="feedback_title">Help improve the parser</string>
-    <string name="feedback_intro">This looks through the last 90 days of SMS for bank messages the app couldn\'t read, so support for them can be added.\n\n• It runs only now, on this phone, and changes nothing: no transactions, streaks, widgets or notifications.\n• Personal messages, OTPs, offers and reminders are skipped.\n• Account, card, UPI, reference and phone numbers are masked before you see them.\n• You see exactly what will be sent, can remove any message, and your own mail app sends it. The app itself has no internet access.</string>
+    <string name="feedback_intro">This looks through the last 90 days of SMS for bank messages the app couldn\'t read, so support for them can be added.\n\n• It runs only now, on this phone, and changes nothing: no transactions, streaks, widgets or notifications.\n• Personal messages, OTPs, offers and reminders are skipped.\n• Before you see them, every number becomes 9 (account and card numbers keep their last 2 digits) and every word the app doesn\'t know, so names and shops, becomes x. Links and UPI IDs are removed.\n• You see exactly what will be sent, can remove any message, and your own mail app sends it. The app itself has no internet access.</string>
+    <string name="feedback_keep_amounts">Keep real amounts</string>
+    <string name="feedback_keep_amounts_summary">Helps check that amounts are read right. Balances and all other numbers stay masked.</string>
     <string name="feedback_scan">Scan last 90 days</string>
     <string name="feedback_scanning">Reading SMS on this phone…</string>
     <string name="feedback_no_permission">SMS access is off, so there is nothing to scan. Turn it on in App info to use this.</string>
@@ -54,8 +61,15 @@
         <item quantity="one">%1$d message will be sent</item>
         <item quantity="other">%1$d messages will be sent</item>
     </plurals>
-    <string name="feedback_preview_hint">This is exactly what will be shared. Remove anything you don\'t want to send, and check for names: they aren\'t masked.</string>
+    <string name="feedback_preview_hint">This is exactly what will be shared. Remove anything you don\'t want to send.</string>
     <string name="feedback_remove">Remove message from %1$s</string>
+    <string name="feedback_by_sender">By sender</string>
+    <plurals name="feedback_sender_count">
+        <item quantity="one">%1$s: %2$d message</item>
+        <item quantity="other">%1$s: %2$d messages</item>
+    </plurals>
+    <string name="feedback_remove_all">Remove all</string>
+    <string name="feedback_remove_all_from">Remove all messages from %1$s</string>
     <string name="feedback_email">Email</string>
     <string name="feedback_save">Save file</string>
     <string name="feedback_saved">File saved</string>
@@ -64,11 +78,13 @@
     <!-- Where "Help improve the parser" emails go (owner's choice, ADR-0043). Public in the source and the APK. -->
     <string name="feedback_email_address" translatable="false">skrobotics104@gmail.com</string>
     <string name="settings_unparsed">Unparsed bank SMS</string>
+    <string name="settings_unparsed_add">Add as transaction</string>
+    <string name="settings_unparsed_added">Added to transactions</string>
     <plurals name="settings_unparsed_summary">
         <item quantity="one">%1$d message the app couldn\'t read</item>
         <item quantity="other">%1$d messages the app couldn\'t read</item>
     </plurals>
-    <string name="settings_unparsed_hint">Bank messages that did not become transactions. Account, card, UPI and reference numbers are already hidden. Copy one (remove any names first) to report it so support for it can be added. OTPs and offers are never kept.</string>
+    <string name="settings_unparsed_hint">Bank messages that did not become transactions. Account, card, UPI and reference numbers are already hidden. Add one as a transaction yourself, or copy one (remove any names first) to report it so support for it can be added. OTPs and offers are never kept.</string>
     <string name="settings_unparsed_empty_title">Nothing here</string>
     <string name="settings_unparsed_empty_body">Every bank SMS so far became a transaction.</string>
     <string name="settings_unparsed_copied">Copied</string>
@@ -102,13 +118,26 @@
     <string name="settings_export_csv">Export to CSV</string>
     <string name="settings_export_csv_summary">Every transaction, for a spreadsheet</string>
     <string name="settings_backup">Back up</string>
-    <string name="settings_backup_summary">Save everything to a file. It isn\'t encrypted: keep it somewhere safe.</string>
+    <string name="settings_backup_summary">Save everything to a file, optionally protected with a password</string>
     <string name="settings_restore">Restore</string>
     <string name="settings_restore_summary">Replace everything with a backup file</string>
     <string name="settings_export_confirm_title_csv">Export to CSV?</string>
     <string name="settings_export_confirm_title_backup">Save a backup?</string>
     <string name="settings_export_confirm_body">The file is not encrypted. Anyone, or any app, that can open it can read every transaction, amount and merchant.\n\nNext, choose where to save it. Pick a folder only you use, not a shared or cloud-synced one, and delete the file once you no longer need it.</string>
     <string name="settings_export_confirm">Choose where to save</string>
+    <string name="settings_backup_protect">Protect with a password</string>
+    <string name="settings_backup_protect_body">The file is encrypted (AES-256). Without this password it can\'t be restored, and there is no way to recover a forgotten one.</string>
+    <string name="settings_backup_password">Password</string>
+    <string name="settings_backup_password_repeat">Repeat password</string>
+    <plurals name="settings_backup_password_short">
+        <item quantity="one">At least %1$d character</item>
+        <item quantity="other">At least %1$d characters</item>
+    </plurals>
+    <string name="settings_backup_password_mismatch">Passwords don\'t match</string>
+    <string name="settings_restore_password_title">Password-protected backup</string>
+    <string name="settings_restore_password_body">Enter the password this backup was saved with.</string>
+    <string name="settings_restore_password_wrong">Wrong password, or the file was changed</string>
+    <string name="settings_restore_password_confirm">Restore</string>
     <string name="settings_restore_confirm_title">Restore a backup?</string>
     <string name="settings_restore_confirm_body">Your transactions, categories, merchant rules and settings are replaced by the ones in the file. This can\'t be undone.</string>
     <string name="settings_restore_choose">Choose file</string>
@@ -126,6 +155,7 @@
     <string name="settings_msg_not_backup">That file isn\'t a backup from this app. Nothing changed.</string>
     <string name="settings_msg_too_new">That backup is from a newer version of the app. Update it first.</string>
     <string name="settings_msg_file_failed">Couldn\'t use that file. Nothing changed.</string>
+    <string name="settings_msg_backup_not_saved">The backup wasn\'t saved. Please try again.</string>
     <plurals name="settings_msg_started_fresh">
         <item quantity="one">Deleted %1$d transaction. Tracking starts now.</item>
         <item quantity="other">Deleted %1$d transactions. Tracking starts now.</item>

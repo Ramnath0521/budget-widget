@@ -8,12 +8,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.swashbuckler104.budgetwidget.core.data.WallClock
 import io.github.swashbuckler104.budgetwidget.core.data.backup.DataTransfer
 import io.github.swashbuckler104.budgetwidget.core.data.backup.RestoreResult
+import io.github.swashbuckler104.budgetwidget.core.data.ingest.SmsBodyRetention
 import io.github.swashbuckler104.budgetwidget.core.data.ingest.SmsSync
 import io.github.swashbuckler104.budgetwidget.core.data.repository.TransactionRepository
 import io.github.swashbuckler104.budgetwidget.core.datastore.AppearanceSettings
 import io.github.swashbuckler104.budgetwidget.core.datastore.NotificationSettings
 import io.github.swashbuckler104.budgetwidget.core.datastore.NudgeSettings
 import io.github.swashbuckler104.budgetwidget.core.datastore.SettingsStore
+import io.github.swashbuckler104.budgetwidget.core.datastore.SmsRetention
 import io.github.swashbuckler104.budgetwidget.core.datastore.ThemeMode
 import java.io.IOException
 import java.io.OutputStream
@@ -40,10 +42,16 @@ data class SettingsUiState(
     val autoSort: Boolean = false,
     val appearance: AppearanceSettings = AppearanceSettings(),
     val secureScreen: Boolean = true,
+    val smsRetention: SmsRetention = SmsRetention.FOREVER,
     val unparsedCount: Int = 0,
     /** A backup, restore, export or reset is running: its buttons are disabled. */
     val busy: Boolean = false,
+    /** The chosen backup is password-protected: ask for the password (ADR-0044). */
+    val restorePrompt: RestorePrompt? = null,
 )
+
+/** [wrong]: the last password tried didn't open the file. */
+data class RestorePrompt(val wrong: Boolean = false)
 
 /** One-off results shown in a snackbar. */
 sealed interface SettingsMessage {
@@ -59,9 +67,16 @@ sealed interface SettingsMessage {
 
     data object FileFailed : SettingsMessage
 
+    /** The app was closed while the file picker was open; the backup settings were lost. */
+    data object BackupNotSaved : SettingsMessage
+
     data class StartedFresh(val removed: Int) : SettingsMessage
 
     data class ImportStarted(val days: Int) : SettingsMessage
+}
+
+private class PendingBackup(val passphrase: CharArray?) {
+    fun clear() = passphrase?.fill(' ')
 }
 
 /** The settings screen (SCOPE.md F9). File work goes through Storage Access Framework URIs. */
@@ -72,9 +87,15 @@ class SettingsViewModel @Inject constructor(
     private val sync: SmsSync,
     private val clock: WallClock,
     private val resolver: ContentResolver,
+    private val retention: SmsBodyRetention,
     transactions: TransactionRepository,
 ) : ViewModel() {
     private val busy = MutableStateFlow(false)
+
+    /** The password for the backup whose file picker is open; memory only, never saved state. */
+    private var pendingBackup: PendingBackup? = null
+    private var restoreUri: Uri? = null
+    private val restorePrompt = MutableStateFlow<RestorePrompt?>(null)
     private val messageChannel = Channel<SettingsMessage>(Channel.BUFFERED)
     val messages: Flow<SettingsMessage> = messageChannel.receiveAsFlow()
 
@@ -82,9 +103,9 @@ class SettingsViewModel @Inject constructor(
         combine(settings.notifications, settings.nudge, settings.autoSort, ::Triple),
         settings.appearance,
         transactions.observeUnparsedCount(),
-        busy,
-        settings.secureScreen,
-    ) { (notifications, nudge, auto), appearance, unparsed, working, secure ->
+        combine(busy, restorePrompt, ::Pair),
+        combine(settings.secureScreen, settings.smsRetention, ::Pair),
+    ) { (notifications, nudge, auto), appearance, unparsed, (working, prompt), (secure, keepSms) ->
         SettingsUiState(
             loaded = true,
             notifications = notifications,
@@ -92,8 +113,10 @@ class SettingsViewModel @Inject constructor(
             autoSort = auto,
             appearance = appearance,
             secureScreen = secure,
+            smsRetention = keepSms,
             unparsedCount = unparsed,
             busy = working,
+            restorePrompt = prompt,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), SettingsUiState())
 
@@ -116,6 +139,12 @@ class SettingsViewModel @Inject constructor(
 
     fun setSecureScreen(enabled: Boolean) = launch { settings.setSecureScreen(enabled) }
 
+    /** A shorter limit drops older SMS text right away, not at the next scan (ADR-0045). */
+    fun setSmsRetention(keep: SmsRetention) = launch {
+        settings.setSmsRetention(keep)
+        retention.apply(keep)
+    }
+
     fun setDynamicColor(enabled: Boolean) = launch { settings.setDynamicColor(enabled) }
 
     /** Imports inbox SMS from the last [days] days (flagged as backfill, SCOPE.md F1/F9). */
@@ -124,9 +153,36 @@ class SettingsViewModel @Inject constructor(
         messageChannel.trySend(SettingsMessage.ImportStarted(days))
     }
 
-    fun backup(uri: Uri, appVersion: String) = fileWork {
-        openOutput(uri).use { transfer.backup(it, appVersion) }
-        SettingsMessage.BackedUp
+    /**
+     * Call before opening the file picker. A blank [passphrase] means a plain backup. Kept only in
+     * memory: if the process dies while the picker is open, [backup] refuses rather than silently
+     * writing an unprotected file.
+     */
+    fun prepareBackup(passphrase: String?) {
+        pendingBackup?.clear()
+        pendingBackup = PendingBackup(passphrase?.takeIf { it.isNotEmpty() }?.toCharArray())
+    }
+
+    /** The file picker was closed without choosing a file. */
+    fun cancelBackup() {
+        pendingBackup?.clear()
+        pendingBackup = null
+    }
+
+    fun backup(uri: Uri, appVersion: String) {
+        val pending = pendingBackup ?: run {
+            messageChannel.trySend(SettingsMessage.BackupNotSaved)
+            return
+        }
+        pendingBackup = null
+        fileWork {
+            try {
+                openOutput(uri).use { transfer.backup(it, appVersion, pending.passphrase) }
+            } finally {
+                pending.clear()
+            }
+            SettingsMessage.BackedUp
+        }
     }
 
     fun exportCsv(uri: Uri) = fileWork {
@@ -143,19 +199,47 @@ class SettingsViewModel @Inject constructor(
         null
     } ?: resolver.openOutputStream(uri, "w") ?: throw IOException("no stream")
 
-    fun restore(uri: Uri) = fileWork {
+    fun restore(uri: Uri) {
+        restoreUri = uri
+        restorePrompt.value = null
+        restoreFrom(uri, null)
+    }
+
+    /** The password for the backup that [SettingsUiState.restorePrompt] asks about. */
+    fun restoreWithPassphrase(passphrase: String) {
+        val uri = restoreUri ?: return
+        restoreFrom(uri, passphrase.toCharArray())
+    }
+
+    fun cancelRestore() {
+        restoreUri = null
+        restorePrompt.value = null
+    }
+
+    private fun restoreFrom(uri: Uri, passphrase: CharArray?) = fileWork {
         val input = resolver.openInputStream(uri) ?: throw IOException("no stream")
-        when (val result = input.use { transfer.restore(it) }) {
+        val result = try {
+            input.use { transfer.restore(it, passphrase) }
+        } finally {
+            passphrase?.fill(' ')
+        }
+        when (result) {
+            RestoreResult.NeedsPassphrase -> restorePrompt.value = RestorePrompt()
+            RestoreResult.WrongPassphrase -> restorePrompt.value = RestorePrompt(wrong = true)
+            else -> cancelRestore()
+        }
+        when (result) {
             is RestoreResult.Restored -> SettingsMessage.Restored(result.transactions)
             RestoreResult.NotABackup -> SettingsMessage.NotABackup
             is RestoreResult.TooNew -> SettingsMessage.BackupTooNew
+            RestoreResult.NeedsPassphrase, RestoreResult.WrongPassphrase -> null
         }
     }
 
     fun startFresh() = fileWork { SettingsMessage.StartedFresh(transfer.startFresh()) }
 
     /** Runs one data operation at a time; a second tap while one runs is ignored. */
-    private fun fileWork(block: suspend () -> SettingsMessage) {
+    private fun fileWork(block: suspend () -> SettingsMessage?) {
         if (!busy.compareAndSet(expect = false, update = true)) return
         viewModelScope.launch {
             val message = try {
@@ -172,7 +256,7 @@ class SettingsViewModel @Inject constructor(
             } finally {
                 busy.value = false
             }
-            messageChannel.send(message)
+            message?.let { messageChannel.send(it) }
         }
     }
 

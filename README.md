@@ -91,6 +91,11 @@ Every other **Settings → ...** is inside Budget Widget: tap the ⚙ gear at th
 
 The APK is about 4 MB, so a download that stops at 3.7 MB has finished.
 
+Optional, on a computer: each release (from 1.0.3) carries a signed record of the GitHub workflow
+that built it, and can be rebuilt from source to the same bytes. Check the provenance with
+`gh attestation verify budget-widget.apk -R SwashBuckler104/budget-widget`, or follow
+[docs/REPRODUCIBLE_BUILD.md](docs/REPRODUCIBLE_BUILD.md).
+
 ### 2. First launch
 
 A short setup walks you through seven steps (tap **Next** to move on):
@@ -153,7 +158,8 @@ you.
 ### Back up, move phones, reinstall
 
 - **Settings → Back up** saves everything (transactions, categories, merchant rules, settings) to a
-  file you choose. The file isn't encrypted, so keep it somewhere safe. **Settings → Restore**
+  file you choose. Tick *Protect with a password* to encrypt it (AES-256); otherwise anyone who
+  can open the file can read it, so keep it somewhere safe. **Settings → Restore**
   loads it on any phone, replacing what's there. **Settings → Export to CSV** gives a spreadsheet.
 - Uninstalling deletes all app data, and Android's cloud backup is turned off for this app. Back up
   first.

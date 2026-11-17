@@ -246,12 +246,12 @@ private fun RowScope.Chip(focus: Transaction, category: Category, height: Dp) {
         actionParametersOf(WidgetKeys.transaction to focus.id, WidgetKeys.category to category.id),
     )
     ChipBox(action, height, label, WidgetSurfaces.chip) {
-        Label(category.emoji, size = 16.sp, maxLines = 1, maxScale = CONTROL_FONT_SCALE)
+        CategoryMark(category.emoji, categoryColorProvider(category.colorArgb), size = 20.dp, emojiSize = 16.sp)
         Label(
             shortLabel(category.name),
             size = 10.sp,
             maxLines = 1,
-            color = GlanceTheme.colors.onSecondaryContainer,
+            color = GlanceTheme.colors.onSurface,
             maxScale = CONTROL_FONT_SCALE,
         )
     }

@@ -42,17 +42,18 @@ interface UnparsedSmsDao {
     @Query("UPDATE unparsed_sms SET body = :body WHERE id = :id")
     suspend fun updateBody(id: Long, body: String)
 
-    @Query("SELECT receivedAt FROM unparsed_sms WHERE id = :id")
-    suspend fun receivedAt(id: Long): Long?
-
-    @Query("SELECT MAX(receivedAt) FROM unparsed_sms")
-    suspend fun newestReceivedAt(): Long?
+    @Query("SELECT * FROM unparsed_sms WHERE id = :id")
+    suspend fun get(id: Long): UnparsedSmsEntity?
 
     @Query("DELETE FROM unparsed_sms WHERE id = :id")
     suspend fun delete(id: Long)
 
     @Query("DELETE FROM unparsed_sms")
     suspend fun deleteAll()
+
+    /** Entries received before [beforeMillis] (epoch ms, UTC; ADR-0045). */
+    @Query("DELETE FROM unparsed_sms WHERE receivedAt < :beforeMillis")
+    suspend fun deleteBefore(beforeMillis: Long): Int
 
     @Query("SELECT COUNT(*) FROM unparsed_sms")
     suspend fun count(): Int

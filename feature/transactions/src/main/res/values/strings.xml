@@ -21,6 +21,7 @@
     <string name="transactions_title">Transactions</string>
     <string name="transactions_back">Back</string>
     <string name="transactions_search">Search</string>
+    <string name="transactions_filters">Filters</string>
     <string name="transactions_search_hint">Merchant, note or amount</string>
     <string name="transactions_close_search">Close search</string>
     <string name="transactions_more">More options</string>
@@ -142,6 +143,7 @@
     <string name="edit_delete">Delete</string>
     <string name="edit_save">Save</string>
     <string name="add_title">Add cash transaction</string>
+    <string name="add_title_sms">Add transaction from SMS</string>
     <string name="add_when">When</string>
     <string name="add_merchant">Merchant or description (optional)</string>
     <string name="add_save">Add</string>

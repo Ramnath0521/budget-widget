@@ -60,7 +60,11 @@ data class TransactionEdit(
     val occurredAt: Long? = null,
 )
 
-/** A cash (manual) transaction (SCOPE.md F7 "Add manual transaction"). [occurredAt] is epoch ms. */
+/**
+ * A cash (manual) transaction (SCOPE.md F7 "Add manual transaction"). [occurredAt] is epoch ms.
+ * [smsSender] and [smsBody]: the unparsed bank SMS it was added from (ADR-0048), shown as its
+ * source; null for cash.
+ */
 data class ManualTransaction(
     val amountPaise: Long,
     val direction: Direction,
@@ -68,6 +72,8 @@ data class ManualTransaction(
     val merchantName: String?,
     val note: String?,
     val occurredAt: Long,
+    val smsSender: String? = null,
+    val smsBody: String? = null,
 )
 
 sealed interface EditResult {
@@ -225,8 +231,8 @@ class TransactionEditor @Inject constructor(
                 merchantKey = MerchantKeyNormalizer.normalize(manual.merchantName),
                 accountId = null,
                 occurredAt = manual.occurredAt,
-                smsSender = null,
-                smsBody = null,
+                smsSender = manual.smsSender,
+                smsBody = manual.smsBody,
                 reference = null,
                 balanceAfterPaise = null,
                 isCard = false,

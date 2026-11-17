@@ -171,6 +171,45 @@ class DataTransferTest {
     }
 
     @Test
+    fun `a password-protected backup restores only with its password`() = runTest {
+        val source = env(this, "source")
+        source.fill()
+        val bytes = ByteArrayOutputStream()
+            .also { source.transfer.backup(it, "1.0.3", "s3cret pass".toCharArray()) }
+            .toByteArray()
+        val text = bytes.decodeToString()
+        assertThat(text).contains(EncryptedBackup.FORMAT)
+        assertThat(text).doesNotContain("dmart")
+        assertThat(text).doesNotContain("HDFC")
+
+        val target = env(this, "target")
+        target.fill()
+        val before = target.db.backupDao().transactions()
+        assertThat(target.transfer.restore(bytes.inputStream())).isEqualTo(RestoreResult.NeedsPassphrase)
+        assertThat(target.transfer.restore(bytes.inputStream(), "wrong pass".toCharArray()))
+            .isEqualTo(RestoreResult.WrongPassphrase)
+        val cut = bytes.copyOf(bytes.size - 20).inputStream()
+        assertThat(target.transfer.restore(cut, "s3cret pass".toCharArray())).isEqualTo(RestoreResult.NotABackup)
+        assertThat(target.db.backupDao().transactions()).isEqualTo(before)
+        assertThat(replaced).isEqualTo(0)
+
+        val result = target.transfer.restore(bytes.inputStream(), "s3cret pass".toCharArray())
+        assertThat(result).isEqualTo(RestoreResult.Restored(transactions = 2, categories = 63))
+        assertThat(target.db.backupDao().transactions()).isEqualTo(source.db.backupDao().transactions())
+        assertThat(replaced).isEqualTo(1)
+    }
+
+    @Test
+    fun `a plain backup ignores a password, so old files keep restoring`() = runTest {
+        val source = env(this, "source")
+        source.fill()
+        val bytes = ByteArrayOutputStream().also { source.transfer.backup(it, "1.0.1") }.toByteArray()
+        val target = env(this, "target")
+        assertThat(target.transfer.restore(bytes.inputStream(), "anything".toCharArray()))
+            .isEqualTo(RestoreResult.Restored(transactions = 2, categories = 63))
+    }
+
+    @Test
     fun `junk, other formats, newer versions and broken references change nothing`() = runTest {
         val target = env(this, "target")
         target.fill()
@@ -183,6 +222,9 @@ class DataTransferTest {
         val newer = """{"format":"budget-widget-backup","version":99,"exportedAt":0,"appVersion":"9","seedVersion":2,
             "categories":[],"accounts":[],"transactions":[],"merchantRules":[],"settings":{}}"""
         assertThat(target.transfer.restore(newer.byteInputStream())).isEqualTo(RestoreResult.TooNew(99))
+        val newerSealed = """{"format":"budget-widget-backup-encrypted","version":7,"iterations":600000,
+            "salt":"","nonce":"","ciphertext":""}"""
+        assertThat(target.transfer.restore(newerSealed.byteInputStream())).isEqualTo(RestoreResult.TooNew(7))
         // A transaction pointing at a category the file doesn't have.
         val broken = """{"format":"budget-widget-backup","version":1,"exportedAt":0,"appVersion":"1","seedVersion":2,
             "categories":[],"accounts":[],"merchantRules":[],"settings":{},
